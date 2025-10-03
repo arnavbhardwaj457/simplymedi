@@ -9,17 +9,63 @@ const ReportDetailPage = () => {
   const [report, setReport] = useState(null);
   const [simplifiedReport, setSimplifiedReport] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Helper function to safely render any field type
+  const renderField = (field, asList = false) => {
+    if (!field) return null;
+    
+    if (Array.isArray(field)) {
+      return (
+        <ul className="list-disc list-inside space-y-1">
+          {field.map((item, index) => (
+            <li key={index}>
+              {typeof item === 'object' ? (
+                <span>
+                  {item.test && <strong>{item.test}:</strong>} 
+                  {item.value} {item.unit && item.unit}
+                </span>
+              ) : (
+                item
+              )}
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    
+    if (typeof field === 'object') {
+      return (
+        <pre className="whitespace-pre-wrap text-sm bg-gray-100 p-2 rounded">
+          {JSON.stringify(field, null, 2)}
+        </pre>
+      );
+    }
+    
+    return <p className="whitespace-pre-wrap">{field}</p>;
+  };
 
   const fetchReport = useCallback(async () => {
+    // Debug logging
+    console.log('Report ID from params:', id);
+    
+    if (!id) {
+      setError('Report ID is missing from URL');
+      setLoading(false);
+      return;
+    }
+
     try {
+      setError(null);
       const response = await api.get(`/reports/${id}`);
-      setReport(response.data);
+      setReport(response.data.report || response.data);
       
-      if (response.data.simplifiedReport) {
-        setSimplifiedReport(response.data.simplifiedReport);
+      if (response.data.report?.simplifiedReport || response.data.simplifiedReport) {
+        setSimplifiedReport(response.data.report?.simplifiedReport || response.data.simplifiedReport);
       }
     } catch (error) {
       console.error('Error fetching report:', error);
+      setError('Failed to load report. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -55,6 +101,25 @@ const ReportDetailPage = () => {
     return <LoadingSpinner />;
   }
 
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <DocumentTextIcon className="mx-auto h-12 w-12 text-red-400" />
+        <h3 className="mt-2 text-sm font-medium text-gray-900">Error Loading Report</h3>
+        <p className="mt-1 text-sm text-red-500">{error}</p>
+        <p className="mt-1 text-sm text-gray-500">Report ID: {id || 'undefined'}</p>
+        <div className="mt-6">
+          <Link
+            to="/app/reports"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+          >
+            Back to Reports
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (!report) {
     return (
       <div className="text-center py-12">
@@ -63,6 +128,7 @@ const ReportDetailPage = () => {
         <p className="mt-1 text-sm text-gray-500">
           The report you're looking for doesn't exist.
         </p>
+        <p className="mt-1 text-sm text-gray-500">Report ID: {id}</p>
         <div className="mt-6">
           <Link
             to="/app/reports"
@@ -143,9 +209,9 @@ const ReportDetailPage = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700">Simplified Text</label>
                 <div className="mt-1 p-3 bg-green-50 rounded-md">
-                  <p className="text-sm text-gray-900 whitespace-pre-wrap">
-                    {simplifiedReport.simplifiedText}
-                  </p>
+                  <div className="text-sm text-gray-900">
+                    {renderField(simplifiedReport.simplifiedText)}
+                  </div>
                 </div>
               </div>
               
@@ -153,9 +219,9 @@ const ReportDetailPage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Key Findings</label>
                   <div className="mt-1 p-3 bg-blue-50 rounded-md">
-                    <p className="text-sm text-gray-900 whitespace-pre-wrap">
-                      {simplifiedReport.keyFindings}
-                    </p>
+                    <div className="text-sm text-gray-900">
+                      {renderField(simplifiedReport.keyFindings)}
+                    </div>
                   </div>
                 </div>
               )}
@@ -164,9 +230,75 @@ const ReportDetailPage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Recommendations</label>
                   <div className="mt-1 p-3 bg-yellow-50 rounded-md">
-                    <p className="text-sm text-gray-900 whitespace-pre-wrap">
-                      {simplifiedReport.recommendations}
-                    </p>
+                    <div className="text-sm text-gray-900">
+                      {renderField(simplifiedReport.recommendations)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {simplifiedReport.healthRecommendations && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Health Recommendations</label>
+                  <div className="mt-1 p-3 bg-purple-50 rounded-md">
+                    <div className="text-sm text-gray-900">
+                      {typeof simplifiedReport.healthRecommendations === 'object' ? (
+                        <div className="space-y-2">
+                          {simplifiedReport.healthRecommendations.dietary && (
+                            <div>
+                              <strong>Dietary:</strong>
+                              <ul className="list-disc list-inside ml-4">
+                                {Array.isArray(simplifiedReport.healthRecommendations.dietary) 
+                                  ? simplifiedReport.healthRecommendations.dietary.map((item, index) => (
+                                      <li key={index}>{item}</li>
+                                    ))
+                                  : <li>{simplifiedReport.healthRecommendations.dietary}</li>
+                                }
+                              </ul>
+                            </div>
+                          )}
+                          {simplifiedReport.healthRecommendations.lifestyle && (
+                            <div>
+                              <strong>Lifestyle:</strong>
+                              <ul className="list-disc list-inside ml-4">
+                                {Array.isArray(simplifiedReport.healthRecommendations.lifestyle) 
+                                  ? simplifiedReport.healthRecommendations.lifestyle.map((item, index) => (
+                                      <li key={index}>{item}</li>
+                                    ))
+                                  : <li>{simplifiedReport.healthRecommendations.lifestyle}</li>
+                                }
+                              </ul>
+                            </div>
+                          )}
+                          {simplifiedReport.healthRecommendations.followUpActions && (
+                            <div>
+                              <strong>Follow-up Actions:</strong>
+                              <ul className="list-disc list-inside ml-4">
+                                {Array.isArray(simplifiedReport.healthRecommendations.followUpActions) 
+                                  ? simplifiedReport.healthRecommendations.followUpActions.map((item, index) => (
+                                      <li key={index}>{item}</li>
+                                    ))
+                                  : <li>{simplifiedReport.healthRecommendations.followUpActions}</li>
+                                }
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="whitespace-pre-wrap">{simplifiedReport.healthRecommendations}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {simplifiedReport.summary && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Summary</label>
+                  <div className="mt-1 p-3 bg-indigo-50 rounded-md">
+                    <div className="text-sm text-gray-900">
+                      {renderField(simplifiedReport.summary)}
+                    </div>
                   </div>
                 </div>
               )}

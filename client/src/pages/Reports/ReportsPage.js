@@ -16,7 +16,7 @@ const ReportsPage = () => {
   const fetchReports = async () => {
     try {
       const response = await api.get('/reports');
-      setReports(response.data);
+      setReports(response.data.reports || response.data);
     } catch (error) {
       console.error('Error fetching reports:', error);
     } finally {

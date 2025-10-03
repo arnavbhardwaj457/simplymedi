@@ -44,7 +44,7 @@ const UploadReportPage = () => {
       setUploadProgress(100);
 
       toast.success('Report uploaded successfully! Processing will begin shortly.');
-      navigate(`/app/reports/${response.data.id}`);
+      navigate(`/app/reports/${response.data.report.id}`);
     } catch (error) {
       console.error('Upload error:', error);
       toast.error(error.response?.data?.error || 'Upload failed. Please try again.');

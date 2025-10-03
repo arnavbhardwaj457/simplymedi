@@ -9,7 +9,8 @@ require('dotenv').config();
 const { sequelize } = require('./config/database');
 const authRoutes = require('./routes/auth');
 const reportRoutes = require('./routes/reports');
-const chatRoutes = require('./routes/chat');
+const reportsSimpleRoutes = require('./routes/reports-simple');
+const chatRoutes = require('./routes/chat-simple');
 const appointmentRoutes = require('./routes/appointments');
 const userRoutes = require('./routes/users');
 const doctorRoutes = require('./routes/doctors');
@@ -19,6 +20,7 @@ const logger = require('./utils/logger');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const path = require('path');
 
 // Security middleware
 app.use(helmet({
@@ -49,6 +51,9 @@ app.use(cors({
 // Compression and logging
 app.use(compression());
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
+
+// Serve static uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -86,7 +91,8 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/reports', authenticateToken, reportRoutes);
-app.use('/api/chat', authenticateToken, chatRoutes);
+app.use('/api/reports-simple', reportsSimpleRoutes); // Simplified upload without auth
+app.use('/api/chat', chatRoutes);
 app.use('/api/appointments', authenticateToken, appointmentRoutes);
 app.use('/api/users', authenticateToken, userRoutes);
 app.use('/api/doctors', authenticateToken, doctorRoutes);

@@ -55,10 +55,15 @@ const ChatPage = () => {
     setSending(true);
 
     try {
-      const response = await api.post('/chat/message', {
-        message: newMessage,
-        sessionId: sessionId || null,
-      });
+      // Prepare request body
+      const requestBody = { message: newMessage };
+      
+      // Only add sessionId if it's a valid UUID
+      if (sessionId && sessionId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+        requestBody.sessionId = sessionId;
+      }
+      
+      const response = await api.post('/chat/message', requestBody);
 
       const aiMessage = {
         id: response.data.id,

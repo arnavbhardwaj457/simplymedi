@@ -2,6 +2,8 @@ const { s3Client } = require('../config/aws');
 const { PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const logger = require('../utils/logger');
+const fs = require('fs').promises;
+const path = require('path');
 
 class S3Service {
   constructor() {
@@ -42,8 +44,30 @@ class S3Service {
         bucket: this.bucketName
       };
     } catch (error) {
-      logger.error('S3 upload error:', error);
-      throw new Error('Failed to upload file to S3');
+      logger.error('S3 upload error, falling back to local storage:', error);
+      
+      // Fallback to local storage
+      try {
+        const uploadsDir = path.join(process.cwd(), 'uploads', folder);
+        await fs.mkdir(uploadsDir, { recursive: true });
+        
+        const localKey = `${Date.now()}-${fileName}`;
+        const filePath = path.join(uploadsDir, localKey);
+        
+        await fs.writeFile(filePath, fileBuffer);
+        
+        logger.info(`File uploaded locally: ${filePath}`);
+        
+        return {
+          url: `/uploads/${folder}/${localKey}`,
+          key: localKey,
+          bucket: 'local',
+          isLocal: true
+        };
+      } catch (localError) {
+        logger.error('Local upload also failed:', localError);
+        throw new Error('Failed to upload file to both S3 and local storage');
+      }
     }
   }
 

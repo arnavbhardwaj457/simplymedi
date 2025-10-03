@@ -9,8 +9,16 @@ const router = express.Router();
 // Validation middleware
 const validateChatMessage = [
   body('message').trim().isLength({ min: 1, max: 1000 }).withMessage('Message must be between 1 and 1000 characters'),
-  body('sessionId').optional().isUUID().withMessage('Invalid session ID'),
-  body('reportId').optional().isUUID().withMessage('Invalid report ID'),
+  body('sessionId').optional({ values: 'null' }).custom((value) => {
+    if (value === null || value === undefined || value === '') return true;
+    if (typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) return true;
+    throw new Error('Invalid session ID format');
+  }),
+  body('reportId').optional({ values: 'null' }).custom((value) => {
+    if (value === null || value === undefined || value === '') return true;
+    if (typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) return true;
+    throw new Error('Invalid report ID format');
+  }),
   body('language').optional().isIn(['english', 'hindi', 'bengali', 'tamil', 'telugu', 'kannada', 'marathi', 'gujarati', 'punjabi', 'arabic', 'french', 'mandarin'])
 ];
 
@@ -28,15 +36,34 @@ router.post('/message', validateChatMessage, async (req, res) => {
     const { message, sessionId, reportId, language = 'english' } = req.body;
     const startTime = Date.now();
 
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Please log in to use the chat feature'
+      });
+    }
+
     // Generate session ID if not provided
     const chatSessionId = sessionId || require('uuid').v4();
 
-    // Get user's language preference
-    const user = await User.findByPk(req.user.id, {
-      include: ['languagePreference']
-    });
+    // Get user's language preference (with error handling)
+    let user;
+    try {
+      user = await User.findByPk(req.user.id);
+      if (!user) {
+        return res.status(404).json({
+          error: 'User not found',
+          message: 'User account not found'
+        });
+      }
+    } catch (dbError) {
+      logger.error('Database error when fetching user:', dbError);
+      // Continue without user preferences
+      user = { id: req.user.id };
+    }
 
-    const userLanguage = user.languagePreference?.chatLanguage || language;
+    const userLanguage = language;
 
     // Build context
     let context = {
@@ -84,25 +111,45 @@ router.post('/message', validateChatMessage, async (req, res) => {
       messageType: msg.messageType
     }));
 
-    // Send message to AI service
-    const aiResponse = await aiService.chatWithAI(message, context, userLanguage);
+    // Send message to AI service with error handling
+    let aiResponse;
+    try {
+      aiResponse = await aiService.chatWithAI(message, context, userLanguage);
+    } catch (aiError) {
+      logger.error('AI service error:', aiError);
+      // Provide fallback response
+      aiResponse = "I'm sorry, I'm experiencing technical difficulties right now. Please try again later, or contact support if the issue persists.";
+    }
 
     const processingTime = Date.now() - startTime;
 
-    // Save user message
-    const userMessage = await ChatMessage.create({
-      userId: req.user.id,
-      reportId: reportId || null,
-      sessionId: chatSessionId,
-      message: message,
-      messageType: 'user',
-      language: userLanguage,
-      context: context,
-      processingTime: processingTime
-    });
+    // Save user message with error handling
+    let userMessage;
+    try {
+      userMessage = await ChatMessage.create({
+        userId: req.user.id,
+        reportId: reportId || null,
+        sessionId: chatSessionId,
+        message: message,
+        messageType: 'user',
+        language: userLanguage,
+        context: context,
+        processingTime: processingTime
+      });
+    } catch (dbError) {
+      logger.error('Database error saving user message:', dbError);
+      // Continue without saving to database
+      userMessage = {
+        id: Date.now().toString(),
+        message: message,
+        createdAt: new Date()
+      };
+    }
 
     // Save AI response
-    const aiMessage = await ChatMessage.create({
+    let aiMessage;
+    try {
+      aiMessage = await ChatMessage.create({
       userId: req.user.id,
       reportId: reportId || null,
       sessionId: chatSessionId,
@@ -114,19 +161,26 @@ router.post('/message', validateChatMessage, async (req, res) => {
       context: context,
       processingTime: processingTime
     });
+    } catch (dbError) {
+      logger.error('Database error saving AI message:', dbError);
+      // Continue without saving AI response to database
+      aiMessage = {
+        id: Date.now().toString() + '_ai',
+        response: aiResponse,
+        createdAt: new Date()
+      };
+    }
 
     logger.info(`Chat message processed: ${userMessage.id} by user ${req.user.id}`);
 
     res.json({
-      message: {
-        id: userMessage.id,
-        message: message,
-        response: aiResponse,
-        sessionId: chatSessionId,
-        language: userLanguage,
-        processingTime: processingTime,
-        timestamp: userMessage.createdAt
-      }
+      id: aiMessage.id,
+      message: aiResponse,
+      sessionId: chatSessionId,
+      language: userLanguage,
+      processingTime: processingTime,
+      timestamp: aiMessage.createdAt || new Date().toISOString(),
+      success: true
     });
   } catch (error) {
     logger.error('Chat message error:', error);
