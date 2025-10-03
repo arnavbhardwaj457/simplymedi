@@ -1,0 +1,85 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "submit": "Soumettre",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "view": "Voir",
+    "download": "Télécharger",
+    "upload": "Téléverser"
+  },
+  "navigation": {
+    "dashboard": "Tableau de bord",
+    "reports": "Rapports",
+    "appointments": "Rendez-vous",
+    "doctors": "Médecins",
+    "chat": "Chat",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "logout": "Déconnexion"
+  },
+  "auth": {
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "forgotPassword": "Mot de passe oublié?",
+    "rememberMe": "Se souvenir de moi",
+    "loginSuccess": "Connexion réussie",
+    "loginError": "Erreur de connexion",
+    "registerSuccess": "Inscription réussie",
+    "registerError": "Erreur d'inscription"
+  },
+  "reports": {
+    "title": "Rapports médicaux",
+    "upload": "Téléverser le rapport",
+    "view": "Voir le rapport",
+    "simplified": "Rapport simplifié",
+    "original": "Rapport original",
+    "status": "Statut",
+    "processing": "En cours de traitement",
+    "completed": "Terminé",
+    "failed": "Échec",
+    "uploadSuccess": "Rapport téléversé avec succès",
+    "uploadError": "Erreur de téléversement du rapport"
+  },
+  "appointments": {
+    "title": "Rendez-vous",
+    "book": "Prendre rendez-vous",
+    "date": "Date",
+    "time": "Heure",
+    "doctor": "Médecin",
+    "status": "Statut",
+    "confirmed": "Confirmé",
+    "pending": "En attente",
+    "cancelled": "Annulé",
+    "completed": "Terminé"
+  },
+  "doctors": {
+    "title": "Médecins",
+    "specialization": "Spécialisation",
+    "experience": "Expérience",
+    "rating": "Note",
+    "bookAppointment": "Prendre rendez-vous",
+    "viewProfile": "Voir le profil"
+  },
+  "chat": {
+    "title": "Assistant médical IA",
+    "placeholder": "Tapez votre message...",
+    "send": "Envoyer",
+    "typing": "En train de taper...",
+    "welcome": "Bienvenue! Je peux répondre à vos questions sur vos rapports médicaux."
+  }
+}

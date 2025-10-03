@@ -1,0 +1,85 @@
+{
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफलता",
+    "cancel": "रद्द करें",
+    "save": "सहेजें",
+    "edit": "संपादित करें",
+    "delete": "हटाएं",
+    "confirm": "पुष्टि करें",
+    "back": "वापस जाएं",
+    "next": "अगला",
+    "previous": "पिछला",
+    "submit": "जमा करें",
+    "search": "खोजें",
+    "filter": "फिल्टर करें",
+    "sort": "क्रमबद्ध करें",
+    "view": "देखें",
+    "download": "डाउनलोड करें",
+    "upload": "अपलोड करें"
+  },
+  "navigation": {
+    "dashboard": "डैशबोर्ड",
+    "reports": "रिपोर्ट्स",
+    "appointments": "अपॉइंटमेंट्स",
+    "doctors": "डॉक्टर्स",
+    "chat": "चैट",
+    "profile": "प्रोफाइल",
+    "settings": "सेटिंग्स",
+    "logout": "लॉगआउट"
+  },
+  "auth": {
+    "login": "लॉगिन करें",
+    "register": "रजिस्टर करें",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "rememberMe": "मुझे याद रखें",
+    "loginSuccess": "सफलतापूर्वक लॉगिन हुए",
+    "loginError": "लॉगिन में त्रुटि",
+    "registerSuccess": "सफलतापूर्वक रजिस्टर हुए",
+    "registerError": "रजिस्टर में त्रुटि"
+  },
+  "reports": {
+    "title": "मेडिकल रिपोर्ट्स",
+    "upload": "रिपोर्ट अपलोड करें",
+    "view": "रिपोर्ट देखें",
+    "simplified": "सरलीकृत रिपोर्ट",
+    "original": "मूल रिपोर्ट",
+    "status": "स्थिति",
+    "processing": "प्रोसेसिंग",
+    "completed": "पूर्ण",
+    "failed": "असफल",
+    "uploadSuccess": "रिपोर्ट सफलतापूर्वक अपलोड हुई",
+    "uploadError": "रिपोर्ट अपलोड में त्रुटि"
+  },
+  "appointments": {
+    "title": "अपॉइंटमेंट्स",
+    "book": "अपॉइंटमेंट बुक करें",
+    "date": "तारीख",
+    "time": "समय",
+    "doctor": "डॉक्टर",
+    "status": "स्थिति",
+    "confirmed": "पुष्टि",
+    "pending": "लंबित",
+    "cancelled": "रद्द",
+    "completed": "पूर्ण"
+  },
+  "doctors": {
+    "title": "डॉक्टर्स",
+    "specialization": "विशेषज्ञता",
+    "experience": "अनुभव",
+    "rating": "रेटिंग",
+    "bookAppointment": "अपॉइंटमेंट बुक करें",
+    "viewProfile": "प्रोफाइल देखें"
+  },
+  "chat": {
+    "title": "AI मेडिकल असिस्टेंट",
+    "placeholder": "अपना संदेश टाइप करें...",
+    "send": "भेजें",
+    "typing": "टाइप कर रहे हैं...",
+    "welcome": "आपका स्वागत है! मैं आपकी मेडिकल रिपोर्ट्स के बारे में सवालों का जवाब दे सकता हूं।"
+  }
+}

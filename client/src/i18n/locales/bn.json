@@ -1,0 +1,85 @@
+{
+  "common": {
+    "loading": "লোড হচ্ছে...",
+    "error": "ত্রুটি",
+    "success": "সফল",
+    "cancel": "বাতিল",
+    "save": "সংরক্ষণ",
+    "edit": "সম্পাদনা",
+    "delete": "মুছে ফেলুন",
+    "confirm": "নিশ্চিত করুন",
+    "back": "ফিরে যান",
+    "next": "পরবর্তী",
+    "previous": "পূর্ববর্তী",
+    "submit": "জমা দিন",
+    "search": "অনুসন্ধান",
+    "filter": "ফিল্টার",
+    "sort": "সাজান",
+    "view": "দেখুন",
+    "download": "ডাউনলোড",
+    "upload": "আপলোড"
+  },
+  "navigation": {
+    "dashboard": "ড্যাশবোর্ড",
+    "reports": "রিপোর্ট",
+    "appointments": "অ্যাপয়েন্টমেন্ট",
+    "doctors": "ডাক্তার",
+    "chat": "চ্যাট",
+    "profile": "প্রোফাইল",
+    "settings": "সেটিংস",
+    "logout": "লগআউট"
+  },
+  "auth": {
+    "login": "লগইন",
+    "register": "নিবন্ধন",
+    "email": "ইমেইল",
+    "password": "পাসওয়ার্ড",
+    "confirmPassword": "পাসওয়ার্ড নিশ্চিত করুন",
+    "forgotPassword": "পাসওয়ার্ড ভুলে গেছেন?",
+    "rememberMe": "আমাকে মনে রাখুন",
+    "loginSuccess": "সফলভাবে লগইন হয়েছে",
+    "loginError": "লগইনে ত্রুটি",
+    "registerSuccess": "সফলভাবে নিবন্ধিত হয়েছে",
+    "registerError": "নিবন্ধনে ত্রুটি"
+  },
+  "reports": {
+    "title": "মেডিকেল রিপোর্ট",
+    "upload": "রিপোর্ট আপলোড করুন",
+    "view": "রিপোর্ট দেখুন",
+    "simplified": "সরলীকৃত রিপোর্ট",
+    "original": "মূল রিপোর্ট",
+    "status": "অবস্থা",
+    "processing": "প্রক্রিয়াকরণ",
+    "completed": "সম্পূর্ণ",
+    "failed": "ব্যর্থ",
+    "uploadSuccess": "রিপোর্ট সফলভাবে আপলোড হয়েছে",
+    "uploadError": "রিপোর্ট আপলোডে ত্রুটি"
+  },
+  "appointments": {
+    "title": "অ্যাপয়েন্টমেন্ট",
+    "book": "অ্যাপয়েন্টমেন্ট বুক করুন",
+    "date": "তারিখ",
+    "time": "সময়",
+    "doctor": "ডাক্তার",
+    "status": "অবস্থা",
+    "confirmed": "নিশ্চিত",
+    "pending": "মুলতবি",
+    "cancelled": "বাতিল",
+    "completed": "সম্পূর্ণ"
+  },
+  "doctors": {
+    "title": "ডাক্তার",
+    "specialization": "বিশেষজ্ঞতা",
+    "experience": "অভিজ্ঞতা",
+    "rating": "রেটিং",
+    "bookAppointment": "অ্যাপয়েন্টমেন্ট বুক করুন",
+    "viewProfile": "প্রোফাইল দেখুন"
+  },
+  "chat": {
+    "title": "AI মেডিকেল সহায়ক",
+    "placeholder": "আপনার বার্তা টাইপ করুন...",
+    "send": "প্রেরণ",
+    "typing": "টাইপ করছেন...",
+    "welcome": "স্বাগতম! আমি আপনার মেডিকেল রিপোর্ট সম্পর্কে প্রশ্নের উত্তর দিতে পারি।"
+  }
+}

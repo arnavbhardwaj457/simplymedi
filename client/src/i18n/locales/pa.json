@@ -1,0 +1,85 @@
+{
+  "common": {
+    "loading": "ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
+    "error": "ਗਲਤੀ",
+    "success": "ਸਫਲਤਾ",
+    "cancel": "ਰੱਦ ਕਰੋ",
+    "save": "ਸੇਵ ਕਰੋ",
+    "edit": "ਸੰਪਾਦਨ ਕਰੋ",
+    "delete": "ਮਿਟਾਓ",
+    "confirm": "ਪੁਸ਼ਟੀ ਕਰੋ",
+    "back": "ਵਾਪਸ ਜਾਓ",
+    "next": "ਅਗਲਾ",
+    "previous": "ਪਿਛਲਾ",
+    "submit": "ਜਮ੍ਹਾ ਕਰੋ",
+    "search": "ਖੋਜੋ",
+    "filter": "ਫਿਲਟਰ ਕਰੋ",
+    "sort": "ਕ੍ਰਮਬੱਧ ਕਰੋ",
+    "view": "ਦੇਖੋ",
+    "download": "ਡਾਊਨਲੋਡ ਕਰੋ",
+    "upload": "ਅਪਲੋਡ ਕਰੋ"
+  },
+  "navigation": {
+    "dashboard": "ਡੈਸ਼ਬੋਰਡ",
+    "reports": "ਰਿਪੋਰਟਾਂ",
+    "appointments": "ਅਪਾਇੰਟਮੈਂਟ",
+    "doctors": "ਡਾਕਟਰ",
+    "chat": "ਚੈਟ",
+    "profile": "ਪ੍ਰੋਫਾਈਲ",
+    "settings": "ਸੈਟਿੰਗਾਂ",
+    "logout": "ਲਾਗ ਆਉਟ"
+  },
+  "auth": {
+    "login": "ਲਾਗ ਇਨ ਕਰੋ",
+    "register": "ਰਜਿਸਟਰ ਕਰੋ",
+    "email": "ਈਮੇਲ",
+    "password": "ਪਾਸਵਰਡ",
+    "confirmPassword": "ਪਾਸਵਰਡ ਪੁਸ਼ਟੀ ਕਰੋ",
+    "forgotPassword": "ਪਾਸਵਰਡ ਭੁੱਲ ਗਏ?",
+    "rememberMe": "ਮੈਨੂੰ ਯਾਦ ਰੱਖੋ",
+    "loginSuccess": "ਸਫਲਤਾਪੂਰਵਕ ਲਾਗ ਇਨ ਹੋਏ",
+    "loginError": "ਲਾਗ ਇਨ ਵਿੱਚ ਗਲਤੀ",
+    "registerSuccess": "ਸਫਲਤਾਪੂਰਵਕ ਰਜਿਸਟਰ ਹੋਏ",
+    "registerError": "ਰਜਿਸਟਰ ਵਿੱਚ ਗਲਤੀ"
+  },
+  "reports": {
+    "title": "ਮੈਡੀਕਲ ਰਿਪੋਰਟਾਂ",
+    "upload": "ਰਿਪੋਰਟ ਅਪਲੋਡ ਕਰੋ",
+    "view": "ਰਿਪੋਰਟ ਦੇਖੋ",
+    "simplified": "ਸਰਲ ਰਿਪੋਰਟ",
+    "original": "ਮੂਲ ਰਿਪੋਰਟ",
+    "status": "ਸਥਿਤੀ",
+    "processing": "ਪ੍ਰੋਸੈਸਿੰਗ",
+    "completed": "ਪੂਰਾ",
+    "failed": "ਅਸਫਲ",
+    "uploadSuccess": "ਰਿਪੋਰਟ ਸਫਲਤਾਪੂਰਵਕ ਅਪਲੋਡ ਹੋਈ",
+    "uploadError": "ਰਿਪੋਰਟ ਅਪਲੋਡ ਵਿੱਚ ਗਲਤੀ"
+  },
+  "appointments": {
+    "title": "ਅਪਾਇੰਟਮੈਂਟ",
+    "book": "ਅਪਾਇੰਟਮੈਂਟ ਬੁੱਕ ਕਰੋ",
+    "date": "ਤਾਰੀਖ",
+    "time": "ਸਮਾਂ",
+    "doctor": "ਡਾਕਟਰ",
+    "status": "ਸਥਿਤੀ",
+    "confirmed": "ਪੁਸ਼ਟੀ",
+    "pending": "ਬਾਕੀ",
+    "cancelled": "ਰੱਦ",
+    "completed": "ਪੂਰਾ"
+  },
+  "doctors": {
+    "title": "ਡਾਕਟਰ",
+    "specialization": "ਮੁਹਾਰਤ",
+    "experience": "ਅਨੁਭਵ",
+    "rating": "ਰੇਟਿੰਗ",
+    "bookAppointment": "ਅਪਾਇੰਟਮੈਂਟ ਬੁੱਕ ਕਰੋ",
+    "viewProfile": "ਪ੍ਰੋਫਾਈਲ ਦੇਖੋ"
+  },
+  "chat": {
+    "title": "AI ਮੈਡੀਕਲ ਸਹਾਇਕ",
+    "placeholder": "ਆਪਣਾ ਸੁਨੇਹਾ ਟਾਈਪ ਕਰੋ...",
+    "send": "ਭੇਜੋ",
+    "typing": "ਟਾਈਪ ਕਰ ਰਹੇ ਹਨ...",
+    "welcome": "ਸਵਾਗਤ! ਮੈਂ ਤੁਹਾਡੀਆਂ ਮੈਡੀਕਲ ਰਿਪੋਰਟਾਂ ਬਾਰੇ ਸਵਾਲਾਂ ਦੇ ਜਵਾਬ ਦੇ ਸਕਦਾ ਹਾਂ।"
+  }
+}

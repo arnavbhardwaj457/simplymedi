@@ -1,0 +1,85 @@
+{
+  "common": {
+    "loading": "લોડ થઈ રહ્યું છે...",
+    "error": "ભૂલ",
+    "success": "સફળતા",
+    "cancel": "રદ કરો",
+    "save": "સેવ કરો",
+    "edit": "સંપાદન કરો",
+    "delete": "ડિલીટ કરો",
+    "confirm": "પુષ્ટિ કરો",
+    "back": "પાછળ જાઓ",
+    "next": "આગળ",
+    "previous": "પાછલું",
+    "submit": "સબમિટ કરો",
+    "search": "શોધો",
+    "filter": "ફિલ્ટર કરો",
+    "sort": "ક્રમમાં ગોઠવો",
+    "view": "જુઓ",
+    "download": "ડાઉનલોડ કરો",
+    "upload": "અપલોડ કરો"
+  },
+  "navigation": {
+    "dashboard": "ડેશબોર્ડ",
+    "reports": "રિપોર્ટ્સ",
+    "appointments": "અપોઇન્ટમેન્ટ્સ",
+    "doctors": "ડોક્ટર્સ",
+    "chat": "ચેટ",
+    "profile": "પ્રોફાઇલ",
+    "settings": "સેટિંગ્સ",
+    "logout": "લોગઆઉટ"
+  },
+  "auth": {
+    "login": "લોગિન કરો",
+    "register": "રજિસ્ટર કરો",
+    "email": "ઇમેઇલ",
+    "password": "પાસવર્ડ",
+    "confirmPassword": "પાસવર્ડ પુષ્ટિ કરો",
+    "forgotPassword": "પાસવર્ડ ભૂલી ગયા છો?",
+    "rememberMe": "મને યાદ રાખો",
+    "loginSuccess": "સફળતાપૂર્વક લોગિન થયા",
+    "loginError": "લોગિનમાં ભૂલ",
+    "registerSuccess": "સફળતાપૂર્વક રજિસ્ટર થયા",
+    "registerError": "રજિસ્ટરમાં ભૂલ"
+  },
+  "reports": {
+    "title": "મેડિકલ રિપોર્ટ્સ",
+    "upload": "રિપોર્ટ અપલોડ કરો",
+    "view": "રિપોર્ટ જુઓ",
+    "simplified": "સરળ રિપોર્ટ",
+    "original": "મૂળ રિપોર્ટ",
+    "status": "સ્થિતિ",
+    "processing": "પ્રોસેસિંગ",
+    "completed": "પૂર્ણ",
+    "failed": "અસફળ",
+    "uploadSuccess": "રિપોર્ટ સફળતાપૂર્વક અપલોડ થઈ",
+    "uploadError": "રિપોર્ટ અપલોડમાં ભૂલ"
+  },
+  "appointments": {
+    "title": "અપોઇન્ટમેન્ટ્સ",
+    "book": "અપોઇન્ટમેન્ટ બુક કરો",
+    "date": "તારીખ",
+    "time": "સમય",
+    "doctor": "ડોક્ટર",
+    "status": "સ્થિતિ",
+    "confirmed": "પુષ્ટિ",
+    "pending": "પેન્ડિંગ",
+    "cancelled": "રદ",
+    "completed": "પૂર્ણ"
+  },
+  "doctors": {
+    "title": "ડોક્ટર્સ",
+    "specialization": "વિશેષતા",
+    "experience": "અનુભવ",
+    "rating": "રેટિંગ",
+    "bookAppointment": "અપોઇન્ટમેન્ટ બુક કરો",
+    "viewProfile": "પ્રોફાઇલ જુઓ"
+  },
+  "chat": {
+    "title": "AI મેડિકલ સહાયક",
+    "placeholder": "તમારો સંદેશ ટાઇપ કરો...",
+    "send": "મોકલો",
+    "typing": "ટાઇપ કરી રહ્યા છો...",
+    "welcome": "સ્વાગત! હું તમારી મેડિકલ રિપોર્ટ્સ વિશે પ્રશ્નોના જવાબ આપી શકું છું."
+  }
+}
