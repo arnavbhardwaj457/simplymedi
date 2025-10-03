@@ -317,3 +317,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **SimplyMedi** - Making healthcare accessible and understandable for everyone through AI technology.
+#   - s i m p l y m e d i  
+ 
