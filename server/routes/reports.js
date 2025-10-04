@@ -192,6 +192,13 @@ async function processReportAsync(reportId) {
       }
     });
 
+    // Send document to n8n RAG system (non-blocking)
+    if (extractionResult.text && extractionResult.text.trim().length > 0) {
+      sendToRAGSystem(report, extractionResult.text).catch(err => {
+        logger.warn('RAG processing failed (non-critical):', err.message);
+      });
+    }
+
     // Extract structured data
     const structuredData = await ocrService.extractStructuredData(extractionResult.text);
 
@@ -544,5 +551,52 @@ router.get('/:id/download', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate download URL' });
   }
 });
+
+// Helper function to send document to n8n RAG system
+async function sendToRAGSystem(report, extractedText) {
+  try {
+    if (!process.env.RAG_DOCUMENT_WEBHOOK_URL) {
+      logger.info('RAG document webhook not configured, skipping RAG processing');
+      return;
+    }
+
+    const ragPayload = {
+      userId: report.userId,
+      reportId: report.id,
+      fileName: report.originalFileName,
+      content: extractedText,
+      reportType: report.reportType || 'medical_report',
+      reportDate: report.reportDate ? report.reportDate.toISOString() : new Date().toISOString(),
+      doctorName: report.doctorName || '',
+      labName: report.labName || '',
+      uploadDate: report.createdAt.toISOString(),
+      metadata: {
+        fileType: report.fileType,
+        fileSize: report.fileSize,
+        ocrConfidence: report.ocrConfidence
+      }
+    };
+
+    logger.info(`Sending document to n8n RAG system: ${report.id}`);
+
+    const response = await fetch(process.env.RAG_DOCUMENT_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(ragPayload)
+    });
+
+    if (response.ok) {
+      logger.info(`✅ Document ${report.id} successfully processed for RAG`);
+    } else {
+      const errorText = await response.text();
+      logger.error(`❌ RAG processing failed: ${response.status} - ${errorText}`);
+    }
+  } catch (error) {
+    logger.error('❌ RAG processing error:', error.message);
+    throw error;
+  }
+}
 
 module.exports = router;

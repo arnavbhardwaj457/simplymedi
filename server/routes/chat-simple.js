@@ -24,14 +24,63 @@ router.post('/message', validateMessage, async (req, res) => {
     const { message } = req.body;
     const startTime = Date.now();
 
-    // Simple context without database lookups
-    const context = {
-      timestamp: new Date().toISOString(),
-      sessionType: 'web'
-    };
+    let aiResponse;
+    let aiModel = 'n8n-rag';
 
-    // Get AI response
-    const aiResponse = await aiService.chatWithAI(message, context, 'english');
+    // Try n8n RAG first
+    try {
+      if (process.env.RAG_CHAT_WEBHOOK_URL) {
+        logger.info('🤖 Querying n8n RAG system...');
+        logger.info(`   Question: "${message}"`);
+        
+        const ragPayload = {
+          chatInput: message,
+          sessionId: 'web-session-' + Date.now(),
+          userId: 'anonymous-user',
+          language: 'english'
+        };
+
+        logger.info(`📤 Sending to n8n RAG...`);
+
+        const ragResponse = await fetch(process.env.RAG_CHAT_WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(ragPayload)
+        });
+
+        logger.info(`📥 n8n responded with status: ${ragResponse.status}`);
+
+        if (ragResponse.ok) {
+          const ragResult = await ragResponse.json();
+          logger.info(`📦 RAG Result keys: ${Object.keys(ragResult).join(', ')}`);
+          
+          aiResponse = ragResult.output || ragResult.response || ragResult.answer || ragResult.message;
+          
+          if (aiResponse && aiResponse.trim().length > 0) {
+            logger.info(`✅ Using RAG response: "${aiResponse.substring(0, 100)}..."`);
+            aiModel = 'n8n-rag';
+          } else {
+            throw new Error('Empty RAG response');
+          }
+        } else {
+          throw new Error(`RAG failed: ${ragResponse.status}`);
+        }
+      } else {
+        throw new Error('RAG not configured');
+      }
+    } catch (ragError) {
+      logger.warn('⚠️ RAG error, using fallback AI:', ragError.message);
+      
+      // Fallback to regular AI
+      const context = {
+        timestamp: new Date().toISOString(),
+        sessionType: 'web'
+      };
+      aiResponse = await aiService.chatWithAI(message, context, 'english');
+      aiModel = 'perplexity-fallback';
+    }
 
     const processingTime = Date.now() - startTime;
 

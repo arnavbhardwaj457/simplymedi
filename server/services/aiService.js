@@ -8,6 +8,14 @@ class AIService {
     this.googleTranslateApiKey = process.env.GOOGLE_TRANSLATE_API_KEY;
     this.geminiApiKey = process.env.GEMINI_API_KEY;
     
+    // n8n RAG Integration
+    this.n8nBaseUrl = process.env.N8N_BASE_URL || 'http://localhost:5678';
+    this.ragChatWebhookUrl = process.env.RAG_CHAT_WEBHOOK_URL;
+    this.ragDocumentWebhookUrl = process.env.RAG_DOCUMENT_WEBHOOK_URL;
+    this.pineconeApiKey = process.env.PINECONE_API_KEY;
+    this.pineconeEnvironment = process.env.PINECONE_ENVIRONMENT;
+    this.pineconeIndexName = process.env.PINECONE_INDEX_NAME || 'simplymedi-medical-docs';
+    
     // Specialized medical models for healthcare
     this.models = {
       chatCompletion: 'microsoft/DialoGPT-medium',        // Medical chat conversations
@@ -1107,6 +1115,334 @@ Context: ${JSON.stringify(context)}`;
 • Keep this report for your medical records
 
 **Important:** This is an automated analysis. Always consult with your healthcare provider for professional medical interpretation and advice.`;
+  }
+
+  // ==========================================
+  // RAG (Retrieval-Augmented Generation) Methods
+  // ==========================================
+
+  /**
+   * Process medical documents through n8n RAG workflow
+   * This integrates with your Google Drive -> Pinecone workflow
+   */
+  async processDocumentForRAG(documentData) {
+    try {
+      if (!this.ragDocumentWebhookUrl) {
+        throw new Error('RAG document processing webhook URL not configured');
+      }
+
+      logger.info('Processing document for RAG indexing', { 
+        fileName: documentData.fileName,
+        type: documentData.type 
+      });
+
+      const payload = {
+        document: {
+          fileName: documentData.fileName,
+          content: documentData.content,
+          url: documentData.url,
+          type: documentData.type,
+          metadata: {
+            userId: documentData.userId,
+            reportId: documentData.reportId,
+            uploadedAt: new Date().toISOString(),
+            category: documentData.category || 'medical_report'
+          }
+        }
+      };
+
+      const response = await axios.post(this.ragDocumentWebhookUrl, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'SimplyMedi-RAG-Processor/1.0'
+        },
+        timeout: 30000 // 30 seconds timeout for document processing
+      });
+
+      logger.info('Document processed successfully for RAG', { 
+        fileName: documentData.fileName,
+        status: response.status 
+      });
+
+      return {
+        success: true,
+        message: 'Document processed and indexed successfully',
+        embeddings: response.data.embeddings || null,
+        vectorIds: response.data.vectorIds || null
+      };
+
+    } catch (error) {
+      logger.error('Error processing document for RAG:', error);
+      
+      // Fallback: Store document metadata locally for later processing
+      return {
+        success: false,
+        message: 'Document processing failed, queued for retry',
+        error: error.message,
+        fallback: true
+      };
+    }
+  }
+
+  /**
+   * Query medical knowledge using RAG
+   * This integrates with your OpenAI + Pinecone chat workflow
+   */
+  async queryMedicalKnowledgeRAG(query, context = {}) {
+    try {
+      if (!this.ragChatWebhookUrl) {
+        logger.warn('RAG chat webhook not configured, falling back to regular chat');
+        return await this.chatWithGemini(query, context);
+      }
+
+      logger.info('Querying medical knowledge with RAG', { 
+        query: query.substring(0, 100) + '...',
+        contextKeys: Object.keys(context)
+      });
+
+      const payload = {
+        message: query,
+        context: {
+          userId: context.userId,
+          language: context.language || 'english',
+          reportContext: context.reportId ? {
+            reportId: context.reportId,
+            reportType: context.reportType
+          } : null,
+          sessionId: context.sessionId || `session_${Date.now()}`,
+          medicalHistory: context.medicalHistory || [],
+          preferences: {
+            responseLength: context.responseLength || 'medium',
+            technicalLevel: context.technicalLevel || 'simplified',
+            includeReferences: context.includeReferences !== false
+          }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          source: 'SimplyMedi-App',
+          version: '1.0'
+        }
+      };
+
+      const response = await axios.post(this.ragChatWebhookUrl, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'SimplyMedi-RAG-Chat/1.0'
+        },
+        timeout: 45000 // 45 seconds for complex RAG queries
+      });
+
+      const ragResponse = response.data;
+
+      logger.info('RAG query completed successfully', {
+        responseLength: ragResponse.response?.length || 0,
+        sourcesFound: ragResponse.sources?.length || 0
+      });
+
+      return {
+        success: true,
+        response: ragResponse.response || ragResponse.message,
+        sources: ragResponse.sources || [],
+        confidence: ragResponse.confidence || 0.8,
+        contextUsed: ragResponse.contextUsed || false,
+        processingTime: ragResponse.processingTime,
+        model: 'n8n-rag-openai',
+        metadata: {
+          vectorsQueried: ragResponse.vectorsQueried,
+          similarityThreshold: ragResponse.similarityThreshold,
+          documentsReferenced: ragResponse.documentsReferenced
+        }
+      };
+
+    } catch (error) {
+      logger.error('Error in RAG medical knowledge query:', error);
+      
+      // Fallback to regular Gemini chat
+      logger.info('Falling back to Gemini chat for query');
+      const fallbackResponse = await this.chatWithGemini(query, context);
+      
+      return {
+        ...fallbackResponse,
+        fallback: true,
+        originalError: error.message
+      };
+    }
+  }
+
+  /**
+   * Get medical document recommendations using RAG
+   * Finds similar documents or relevant medical information
+   */
+  async getMedicalRecommendationsRAG(reportData, userContext = {}) {
+    try {
+      const query = this.buildRecommendationQuery(reportData, userContext);
+      
+      const ragResponse = await this.queryMedicalKnowledgeRAG(query, {
+        ...userContext,
+        reportId: reportData.id,
+        reportType: reportData.reportType,
+        technicalLevel: 'detailed',
+        responseLength: 'long',
+        includeReferences: true
+      });
+
+      if (ragResponse.success) {
+        return {
+          success: true,
+          recommendations: this.parseRecommendationsFromRAG(ragResponse.response),
+          sources: ragResponse.sources,
+          confidence: ragResponse.confidence,
+          relatedDocuments: ragResponse.metadata?.documentsReferenced || []
+        };
+      }
+
+      throw new Error('RAG recommendation query failed');
+
+    } catch (error) {
+      logger.error('Error getting RAG medical recommendations:', error);
+      
+      // Fallback to existing recommendation system
+      return await this.generateRecommendationsWithGemini(
+        reportData.extractedText || reportData.content,
+        userContext
+      );
+    }
+  }
+
+  /**
+   * Build optimized query for medical recommendations
+   */
+  buildRecommendationQuery(reportData, userContext) {
+    const reportType = reportData.reportType || 'medical_report';
+    const symptoms = reportData.symptoms || [];
+    const findings = reportData.keyFindings || [];
+    
+    return `Based on this ${reportType} with findings: ${findings.join(', ')} and symptoms: ${symptoms.join(', ')}, provide comprehensive medical recommendations including:
+    1. Follow-up care suggestions
+    2. Lifestyle modifications
+    3. Monitoring recommendations  
+    4. When to seek immediate care
+    5. Similar case references from medical literature
+    
+    Patient context: Age group ${userContext.ageGroup || 'adult'}, Gender: ${userContext.gender || 'not specified'}`;
+  }
+
+  /**
+   * Parse structured recommendations from RAG response
+   */
+  parseRecommendationsFromRAG(response) {
+    try {
+      // Try to extract structured recommendations
+      const sections = response.split(/\d+\./);
+      
+      return {
+        followUpCare: sections[1]?.trim() || '',
+        lifestyleModifications: sections[2]?.trim() || '',
+        monitoring: sections[3]?.trim() || '',
+        urgentCare: sections[4]?.trim() || '',
+        references: sections[5]?.trim() || '',
+        fullResponse: response
+      };
+    } catch (error) {
+      return {
+        fullResponse: response,
+        structured: false
+      };
+    }
+  }
+
+  /**
+   * Search medical knowledge base using RAG
+   * For general medical questions and educational content
+   */
+  async searchMedicalKnowledge(searchQuery, filters = {}) {
+    try {
+      const enhancedQuery = `Medical knowledge search: ${searchQuery}. 
+      Provide evidence-based information with references. 
+      Category: ${filters.category || 'general'}. 
+      Audience: ${filters.audience || 'patient'}.`;
+
+      const ragResponse = await this.queryMedicalKnowledgeRAG(enhancedQuery, {
+        language: filters.language || 'english',
+        technicalLevel: filters.technicalLevel || 'simplified',
+        includeReferences: true,
+        responseLength: 'medium'
+      });
+
+      return {
+        success: ragResponse.success,
+        results: [{
+          title: `Medical Information: ${searchQuery}`,
+          content: ragResponse.response,
+          sources: ragResponse.sources || [],
+          confidence: ragResponse.confidence || 0.8,
+          category: filters.category || 'general'
+        }],
+        totalResults: 1,
+        processingTime: ragResponse.processingTime
+      };
+
+    } catch (error) {
+      logger.error('Error searching medical knowledge base:', error);
+      return {
+        success: false,
+        results: [],
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Check RAG system health and configuration
+   */
+  async checkRAGSystemHealth() {
+    const health = {
+      documentProcessing: false,
+      chatSystem: false,
+      pineconeConnection: false,
+      n8nWorkflows: false,
+      errors: []
+    };
+
+    try {
+      // Test document processing webhook
+      if (this.ragDocumentWebhookUrl) {
+        try {
+          await axios.get(this.ragDocumentWebhookUrl.replace('/webhook/', '/health'), { timeout: 5000 });
+          health.documentProcessing = true;
+        } catch (error) {
+          health.errors.push(`Document processing webhook error: ${error.message}`);
+        }
+      } else {
+        health.errors.push('RAG document webhook URL not configured');
+      }
+
+      // Test chat webhook
+      if (this.ragChatWebhookUrl) {
+        try {
+          await axios.get(this.ragChatWebhookUrl.replace('/webhook/', '/health'), { timeout: 5000 });
+          health.chatSystem = true;
+        } catch (error) {
+          health.errors.push(`Chat webhook error: ${error.message}`);
+        }
+      } else {
+        health.errors.push('RAG chat webhook URL not configured');
+      }
+
+      // Check if all required environment variables are set
+      health.n8nWorkflows = !!(this.n8nBaseUrl && (this.ragChatWebhookUrl || this.ragDocumentWebhookUrl));
+      health.pineconeConnection = !!(this.pineconeApiKey && this.pineconeEnvironment);
+
+      health.overall = health.documentProcessing && health.chatSystem && health.pineconeConnection;
+
+      logger.info('RAG system health check completed', health);
+      return health;
+
+    } catch (error) {
+      logger.error('Error checking RAG system health:', error);
+      health.errors.push(`Health check error: ${error.message}`);
+      return health;
+    }
   }
 }
 

@@ -111,14 +111,78 @@ router.post('/message', validateChatMessage, async (req, res) => {
       messageType: msg.messageType
     }));
 
-    // Send message to AI service with error handling
+    // Send message to n8n RAG system first, then fallback to AI service
     let aiResponse;
+    let aiModel = 'n8n-rag';
+    
+    // ALWAYS try n8n RAG first - don't use fallback for medical questions
     try {
-      aiResponse = await aiService.chatWithAI(message, context, userLanguage);
-    } catch (aiError) {
-      logger.error('AI service error:', aiError);
-      // Provide fallback response
-      aiResponse = "I'm sorry, I'm experiencing technical difficulties right now. Please try again later, or contact support if the issue persists.";
+      if (!process.env.RAG_CHAT_WEBHOOK_URL) {
+        logger.error('❌ RAG_CHAT_WEBHOOK_URL not configured!');
+        throw new Error('RAG webhook not configured');
+      }
+
+      logger.info('🤖 Querying n8n RAG system...');
+      logger.info(`   Question: "${message}"`);
+      logger.info(`   User ID: ${req.user.id}`);
+      
+      const ragPayload = {
+        chatInput: message,
+        sessionId: chatSessionId,
+        userId: req.user.id,
+        reportId: reportId || null,
+        language: userLanguage
+      };
+
+      logger.info(`📤 Sending to n8n: ${process.env.RAG_CHAT_WEBHOOK_URL.substring(0, 50)}...`);
+
+      const ragResponse = await fetch(process.env.RAG_CHAT_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(ragPayload)
+      });
+
+      logger.info(`📥 n8n responded with status: ${ragResponse.status}`);
+
+      if (ragResponse.ok) {
+        const ragResult = await ragResponse.json();
+        logger.info(`📦 RAG Result keys: ${Object.keys(ragResult).join(', ')}`);
+        
+        aiResponse = ragResult.output || ragResult.response || ragResult.answer || ragResult.message;
+        
+        if (aiResponse && aiResponse.trim().length > 0) {
+          logger.info(`✅ RAG response received: "${aiResponse.substring(0, 100)}..."`);
+          logger.info(`   Response length: ${aiResponse.length} chars`);
+          
+          // DON'T use fallback - use RAG response even if it says "no information"
+          // This is better than generic medical advice
+          aiModel = 'n8n-rag';
+        } else {
+          logger.error('❌ Empty RAG response');
+          throw new Error('Empty RAG response');
+        }
+      } else {
+        const errorText = await ragResponse.text();
+        logger.error(`❌ RAG request failed: ${ragResponse.status}`);
+        logger.error(`   Error: ${errorText}`);
+        throw new Error(`RAG request failed: ${ragResponse.status}`);
+      }
+    } catch (ragError) {
+      logger.error('❌ RAG system error:', ragError.message);
+      logger.error('   Stack:', ragError.stack);
+      
+      // Fallback to existing AI service
+      try {
+        aiResponse = await aiService.chatWithAI(message, context, userLanguage);
+        aiModel = 'perplexity-fallback';
+      } catch (aiError) {
+        logger.error('AI service error:', aiError);
+        // Provide final fallback response
+        aiResponse = "I'm sorry, I'm experiencing technical difficulties right now. Please try again later, or contact support if the issue persists.";
+        aiModel = 'fallback';
+      }
     }
 
     const processingTime = Date.now() - startTime;
@@ -150,17 +214,17 @@ router.post('/message', validateChatMessage, async (req, res) => {
     let aiMessage;
     try {
       aiMessage = await ChatMessage.create({
-      userId: req.user.id,
-      reportId: reportId || null,
-      sessionId: chatSessionId,
-      message: message,
-      response: aiResponse,
-      messageType: 'ai',
-      language: userLanguage,
-      aiModel: 'perplexity',
-      context: context,
-      processingTime: processingTime
-    });
+        userId: req.user.id,
+        reportId: reportId || null,
+        sessionId: chatSessionId,
+        message: message,
+        response: aiResponse,
+        messageType: 'ai',
+        language: userLanguage,
+        aiModel: aiModel,
+        context: context,
+        processingTime: processingTime
+      });
     } catch (dbError) {
       logger.error('Database error saving AI message:', dbError);
       // Continue without saving AI response to database
