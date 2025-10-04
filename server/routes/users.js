@@ -417,4 +417,105 @@ router.delete('/account', async (req, res) => {
   }
 });
 
+// Get user settings
+router.get('/settings', async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      include: ['languagePreference']
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Return user settings
+    const settings = {
+      profile: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        dateOfBirth: user.dateOfBirth,
+        gender: user.gender,
+        address: user.address
+      },
+      preferences: user.preferences || {
+        notifications: true,
+        emailUpdates: true,
+        accessibility: {
+          largeFont: false,
+          highContrast: false,
+          screenReader: false
+        }
+      },
+      languagePreference: user.languagePreference || {
+        primaryLanguage: 'english',
+        interfaceLanguage: 'english',
+        reportLanguage: 'english',
+        chatLanguage: 'english',
+        autoTranslate: true,
+        translationQuality: 'balanced'
+      },
+      emergencyContact: user.emergencyContact || {},
+      medicalHistory: user.medicalHistory || [],
+      allergies: user.allergies || [],
+      currentMedications: user.currentMedications || []
+    };
+
+    res.json({ settings });
+  } catch (error) {
+    logger.error('Error fetching user settings:', error);
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+// Update user settings
+router.patch('/settings', async (req, res) => {
+  try {
+    const { profile, preferences, languagePreference, emergencyContact, medicalHistory, allergies, currentMedications } = req.body;
+
+    const updateData = {};
+    
+    // Update profile fields
+    if (profile) {
+      const profileFields = ['firstName', 'lastName', 'phoneNumber', 'dateOfBirth', 'gender', 'address'];
+      profileFields.forEach(field => {
+        if (profile[field] !== undefined) {
+          updateData[field] = profile[field];
+        }
+      });
+    }
+
+    // Update preferences
+    if (preferences) {
+      updateData.preferences = preferences;
+    }
+
+    // Update other fields
+    if (emergencyContact) updateData.emergencyContact = emergencyContact;
+    if (medicalHistory) updateData.medicalHistory = medicalHistory;
+    if (allergies) updateData.allergies = allergies;
+    if (currentMedications) updateData.currentMedications = currentMedications;
+
+    // Update user
+    await User.update(updateData, {
+      where: { id: req.user.id }
+    });
+
+    // Update language preferences if provided
+    if (languagePreference) {
+      await LanguagePreference.upsert({
+        userId: req.user.id,
+        ...languagePreference
+      });
+    }
+
+    logger.info(`User settings updated: ${req.user.id}`);
+    res.json({ message: 'Settings updated successfully' });
+  } catch (error) {
+    logger.error('Error updating user settings:', error);
+    res.status(500).json({ error: 'Failed to update settings' });
+  }
+});
+
 module.exports = router;

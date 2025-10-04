@@ -15,16 +15,18 @@ const LoadingSpinner = ({
   };
 
   const colorClasses = {
-    primary: 'border-primary-600',
+    primary: 'border-brown-600',
     secondary: 'border-secondary-600',
     white: 'border-white',
-    gray: 'border-gray-600',
+    gray: 'border-secondary-600',
+    brown: 'border-brown-600',
+    coffee: 'border-coffee-600',
   };
 
   return (
     <div className={`flex flex-col items-center justify-center ${className}`}>
       <div
-        className={`animate-spin rounded-full border-2 border-gray-200 ${colorClasses[color]} ${sizeClasses[size]}`}
+        className={`animate-spin rounded-full border-2 border-brown-200 ${colorClasses[color]} ${sizeClasses[size]}`}
         style={{ borderTopColor: 'transparent' }}
       />
       {text && (

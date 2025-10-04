@@ -93,6 +93,21 @@
     "email_invalid": "Please enter a valid email address",
     "passwords_dont_match": "Passwords don't match"
   },
+  "pages": {
+    "dashboard": {
+      "welcomeBack": "Welcome back",
+      "healthJourneyOverview": "Here's an overview of your health journey with SimplyMedi",
+      "uploadReport": "Upload Report",
+      "uploadReportDescription": "Upload a new medical report for AI analysis",
+      "bookAppointment": "Book Appointment",
+      "bookAppointmentDescription": "Schedule an appointment with a doctor"
+    },
+    "settings": "Settings",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "ourDoctors": "Our Doctors",
+    "findTheRightHealthcareProfessional": "Find the right healthcare professional for your needs"
+  },
   "dashboard": {
     "title": "Dashboard",
     "welcome_back": "Welcome back, {{name}}!",
@@ -376,5 +391,14 @@
     "success": "Operation successful",
     "warning": "Warning message",
     "info": "Information message"
-  }
+  },
+  "welcomeBack": "Welcome back",
+  "healthJourneyOverview": "Here's an overview of your health journey with SimplyMedi",
+  "uploadReport": "Upload Report",
+  "uploadReportDescription": "Upload a new medical report for AI analysis",
+  "bookAppointment": "Book Appointment",
+  "bookAppointmentDescription": "Schedule an appointment with a doctor",
+  "notifications": "Notifications",
+  "ourDoctors": "Our Doctors",
+  "findTheRightHealthcareProfessional": "Find the right healthcare professional for your needs"
 }

@@ -10,13 +10,14 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import LanguageSelector from '../UI/LanguageSelector';
 
 const Header = ({ onMenuClick, user, doctor }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const { logout } = useAuth();
   const { unreadCount } = useNotification();
-  const { currentLanguage, getLanguageName } = useLanguage();
+  const { currentLanguage, supportedLanguages, t } = useLanguage();
 
   const handleLogout = () => {
     logout();
@@ -37,14 +38,14 @@ const Header = ({ onMenuClick, user, doctor }) => {
   ];
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
+    <header className="bg-white/90 backdrop-blur-lg shadow-brown border-b border-brown-200 animate-slide-down">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Left side */}
           <div className="flex items-center">
             <button
               type="button"
-              className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+              className="lg:hidden p-2 rounded-md text-brown-400 hover:text-brown-600 hover:bg-brown-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brown-500 transition-all duration-200 hover:scale-110"
               onClick={onMenuClick}
             >
               <span className="sr-only">Open sidebar</span>
@@ -52,7 +53,7 @@ const Header = ({ onMenuClick, user, doctor }) => {
             </button>
 
             <div className="hidden lg:block">
-              <h1 className="text-xl font-semibold text-gray-900">
+              <h1 className="text-xl font-semibold text-brown-900 animate-fade-in">
                 SimplyMedi
               </h1>
             </div>
@@ -60,18 +61,14 @@ const Header = ({ onMenuClick, user, doctor }) => {
 
           {/* Right side */}
           <div className="flex items-center space-x-4">
-            {/* Language indicator */}
-            <div className="hidden sm:block">
-              <span className="text-sm text-gray-500">
-                {getLanguageName(currentLanguage)}
-              </span>
-            </div>
+            {/* Language selector */}
+            <LanguageSelector className="animate-fade-in" />
 
             {/* Notifications */}
             <div className="relative">
               <button
                 type="button"
-                className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+                className="p-2 rounded-md text-brown-400 hover:text-brown-600 hover:bg-brown-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brown-500 transition-all duration-200 hover:scale-110"
                 onClick={() => setShowNotifications(!showNotifications)}
               >
                 <span className="sr-only">View notifications</span>

@@ -1,43 +1,48 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import i18n from '../i18n';
+import api from '../services/api';
 
 const LanguageContext = createContext();
 
 const initialState = {
   currentLanguage: 'english',
-  supportedLanguages: [
-    { code: 'english', name: 'English', nativeName: 'English' },
-    { code: 'hindi', name: 'Hindi', nativeName: 'हिन्दी' },
-    { code: 'bengali', name: 'Bengali', nativeName: 'বাংলা' },
-    { code: 'tamil', name: 'Tamil', nativeName: 'தமிழ்' },
-    { code: 'telugu', name: 'Telugu', nativeName: 'తెలుగు' },
-    { code: 'kannada', name: 'Kannada', nativeName: 'ಕನ್ನಡ' },
-    { code: 'marathi', name: 'Marathi', nativeName: 'मराठी' },
-    { code: 'gujarati', name: 'Gujarati', nativeName: 'ગુજરાતી' },
-    { code: 'punjabi', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ' },
-    { code: 'arabic', name: 'Arabic', nativeName: 'العربية' },
-    { code: 'french', name: 'French', nativeName: 'Français' },
-    { code: 'mandarin', name: 'Mandarin', nativeName: '中文' },
-  ],
+  supportedLanguages: {},
+  loading: false,
+  error: null,
   isRTL: false,
   preferences: {
     autoTranslate: true,
-    translationQuality: 'balanced', // fast, balanced, accurate
+    translationQuality: 'balanced',
     dateFormat: 'MM/DD/YYYY',
-    timeFormat: '12h', // 12h, 24h
+    timeFormat: '12h',
     numberFormat: 'en-US',
     currency: 'USD',
     timezone: 'UTC',
   },
+  translations: {},
 };
 
 const languageReducer = (state, action) => {
   switch (action.type) {
+    case 'SET_LOADING':
+      return { ...state, loading: action.payload };
+    
+    case 'SET_ERROR':
+      return { ...state, error: action.payload, loading: false };
+    
+    case 'SET_SUPPORTED_LANGUAGES':
+      return { ...state, supportedLanguages: action.payload, loading: false };
+    
     case 'SET_LANGUAGE':
+      const isRTL = action.payload === 'arabic';
+      // Update i18n language
+      i18n.changeLanguage(action.payload);
+      // Save to localStorage
+      localStorage.setItem('selectedLanguage', action.payload);
       return {
         ...state,
         currentLanguage: action.payload,
-        isRTL: action.payload === 'arabic',
+        isRTL: isRTL,
       };
     
     case 'SET_PREFERENCES':
@@ -46,16 +51,10 @@ const languageReducer = (state, action) => {
         preferences: { ...state.preferences, ...action.payload },
       };
     
-    case 'SET_RTL':
+    case 'SET_TRANSLATIONS':
       return {
         ...state,
-        isRTL: action.payload,
-      };
-    
-    case 'LOAD_PREFERENCES':
-      return {
-        ...state,
-        preferences: { ...state.preferences, ...action.payload },
+        translations: { ...state.translations, ...action.payload },
       };
     
     default:
@@ -66,131 +65,209 @@ const languageReducer = (state, action) => {
 export const LanguageProvider = ({ children }) => {
   const [state, dispatch] = useReducer(languageReducer, initialState);
 
-  const setLanguage = useCallback((languageCode) => {
-    if (state.supportedLanguages.find(lang => lang.code === languageCode)) {
-      dispatch({ type: 'SET_LANGUAGE', payload: languageCode });
-      localStorage.setItem('preferredLanguage', languageCode);
-      
-      // Update i18n language if available
-      if (i18n.hasResourceBundle(languageCode, 'translation')) {
-        i18n.changeLanguage(languageCode);
-      }
-    }
-  }, [state.supportedLanguages]);
-
-  // Load language preferences from localStorage on mount
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('preferredLanguage');
-    const savedPreferences = localStorage.getItem('languagePreferences');
-
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
-    }
-
-    if (savedPreferences) {
-      try {
-        const preferences = JSON.parse(savedPreferences);
-        dispatch({ type: 'LOAD_PREFERENCES', payload: preferences });
-      } catch (error) {
-        console.error('Failed to parse language preferences:', error);
-      }
-    }
-  }, [setLanguage]);
-
-  // Update document direction when RTL changes
-  useEffect(() => {
-    document.documentElement.dir = state.isRTL ? 'rtl' : 'ltr';
-    document.documentElement.lang = state.currentLanguage;
-  }, [state.isRTL, state.currentLanguage]);
-
-  const setPreferences = (preferences) => {
-    dispatch({ type: 'SET_PREFERENCES', payload: preferences });
-    localStorage.setItem('languagePreferences', JSON.stringify(preferences));
-  };
-
-  const getLanguageName = (languageCode) => {
-    const language = state.supportedLanguages.find(lang => lang.code === languageCode);
-    return language ? language.name : languageCode;
-  };
-
-  const getNativeLanguageName = (languageCode) => {
-    const language = state.supportedLanguages.find(lang => lang.code === languageCode);
-    return language ? language.nativeName : languageCode;
-  };
-
-  const formatDate = (date, options = {}) => {
-    const { timeFormat } = state.preferences;
-    
-    const defaultOptions = {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    };
-
-    if (timeFormat === '24h') {
-      defaultOptions.hour = '2-digit';
-      defaultOptions.minute = '2-digit';
-      defaultOptions.hour12 = false;
-    } else {
-      defaultOptions.hour = 'numeric';
-      defaultOptions.minute = '2-digit';
-      defaultOptions.hour12 = true;
-    }
-
-    const formatOptions = { ...defaultOptions, ...options };
-    
-    return new Intl.DateTimeFormat(state.currentLanguage, formatOptions).format(new Date(date));
-  };
-
-  const formatNumber = (number, options = {}) => {
-    const { numberFormat } = state.preferences;
-    return new Intl.NumberFormat(numberFormat, options).format(number);
-  };
-
-  const formatCurrency = (amount, currency = null) => {
-    const { currency: defaultCurrency } = state.preferences;
-    return new Intl.NumberFormat(state.currentLanguage, {
-      style: 'currency',
-      currency: currency || defaultCurrency,
-    }).format(amount);
-  };
-
-  const translateText = async (text, targetLanguage = null) => {
-    if (!state.preferences.autoTranslate) {
-      return text;
-    }
-
-    const target = targetLanguage || state.currentLanguage;
-    
-    if (target === 'english') {
-      return text;
-    }
-
+  // Load supported languages from API
+  const loadSupportedLanguages = useCallback(async () => {
     try {
-      // This would integrate with your translation service
-      // For now, return the original text
-      return text;
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const response = await fetch('/api/languages/supported');
+      const data = await response.json();
+      dispatch({ type: 'SET_SUPPORTED_LANGUAGES', payload: data.languages });
+    } catch (error) {
+      console.error('Failed to load supported languages:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to load languages' });
+    }
+  }, []);
+
+  // Initialize language on mount
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('selectedLanguage') || 'english';
+    dispatch({ type: 'SET_LANGUAGE', payload: savedLanguage });
+    loadSupportedLanguages();
+  }, [loadSupportedLanguages]);
+
+  // Set language
+  const setLanguage = useCallback(async (languageCode) => {
+    try {
+      dispatch({ type: 'SET_LANGUAGE', payload: languageCode });
+      
+      // Update user preferences if authenticated
+      try {
+        await api.patch('/users/language-preferences', {
+          primaryLanguage: languageCode,
+          interfaceLanguage: languageCode,
+          reportLanguage: languageCode,
+          chatLanguage: languageCode,
+        });
+      } catch (error) {
+        // Silently fail if not authenticated
+        console.warn('Could not save language preference:', error);
+      }
+    } catch (error) {
+      console.error('Failed to set language:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to set language' });
+    }
+  }, []);
+
+  // Translate text
+  const translateText = useCallback(async (text, targetLanguage, sourceLanguage = 'auto') => {
+    try {
+      const response = await fetch('/api/languages/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          targetLanguage,
+          sourceLanguage,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Translation failed');
+      }
+      
+      const data = await response.json();
+      return data.translatedText;
     } catch (error) {
       console.error('Translation failed:', error);
-      return text;
+      return text; // Return original text on failure
     }
-  };
+  }, []);
+
+  // Detect language
+  const detectLanguage = useCallback(async (text) => {
+    try {
+      const response = await fetch('/api/languages/detect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Language detection failed');
+      }
+      
+      const data = await response.json();
+      return data.detectedLanguage;
+    } catch (error) {
+      console.error('Language detection failed:', error);
+      return 'english'; // Default to English
+    }
+  }, []);
+
+  // Simplify medical text
+  const simplifyMedicalText = useCallback(async (text, targetLanguage = state.currentLanguage) => {
+    try {
+      const response = await fetch('/api/languages/simplify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          targetLanguage,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Simplification failed');
+      }
+      
+      const data = await response.json();
+      return data.simplifiedText;
+    } catch (error) {
+      console.error('Medical text simplification failed:', error);
+      return text; // Return original text on failure
+    }
+  }, [state.currentLanguage]);
+
+  // Translation helper with caching
+  const t = useCallback((key, params = {}) => {
+    try {
+      let translation = i18n.t(key, params);
+      
+      // If translation is same as key (not found), try to get from our translations cache
+      if (translation === key && state.translations[key]) {
+        translation = state.translations[key];
+      }
+      
+      return translation;
+    } catch (error) {
+      console.error('Translation error:', error);
+      return key;
+    }
+  }, [state.translations]);
+
+  // Format date according to user preferences
+  const formatDate = useCallback((date, format = state.preferences.dateFormat) => {
+    try {
+      const options = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      };
+      
+      if (state.preferences.timeFormat === '24h') {
+        options.hour = '2-digit';
+        options.minute = '2-digit';
+        options.hour12 = false;
+      }
+      
+      return new Intl.DateTimeFormat(
+        state.supportedLanguages[state.currentLanguage]?.code || 'en-US',
+        options
+      ).format(new Date(date));
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return date.toString();
+    }
+  }, [state.currentLanguage, state.preferences, state.supportedLanguages]);
+
+  // Format number according to user preferences
+  const formatNumber = useCallback((number) => {
+    try {
+      return new Intl.NumberFormat(
+        state.preferences.numberFormat
+      ).format(number);
+    } catch (error) {
+      console.error('Number formatting error:', error);
+      return number.toString();
+    }
+  }, [state.preferences.numberFormat]);
 
   const value = {
-    ...state,
+    // State
+    currentLanguage: state.currentLanguage,
+    supportedLanguages: state.supportedLanguages,
+    isRTL: state.isRTL,
+    loading: state.loading,
+    error: state.error,
+    preferences: state.preferences,
+    
+    // Actions
     setLanguage,
-    setPreferences,
-    getLanguageName,
-    getNativeLanguageName,
+    translateText,
+    detectLanguage,
+    simplifyMedicalText,
+    loadSupportedLanguages,
+    
+    // Helpers
+    t,
     formatDate,
     formatNumber,
-    formatCurrency,
-    translateText,
+    
+    // Dispatch for preferences
+    setPreferences: (prefs) => dispatch({ type: 'SET_PREFERENCES', payload: prefs }),
   };
 
   return (
     <LanguageContext.Provider value={value}>
-      {children}
+      <div className={state.isRTL ? 'rtl' : 'ltr'}>
+        {children}
+      </div>
     </LanguageContext.Provider>
   );
 };
@@ -202,3 +279,5 @@ export const useLanguage = () => {
   }
   return context;
 };
+
+export default LanguageContext;

@@ -51,25 +51,25 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-brown-50 via-coffee-50 to-brown-100">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white/90 backdrop-blur-lg shadow-brown border-b border-brown-200 animate-slide-down">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <HeartIcon className="h-8 w-8 text-primary-600" />
-              <span className="ml-2 text-xl font-bold text-gray-900">SimplyMedi</span>
+            <div className="flex items-center animate-slide-in-left">
+              <HeartIcon className="h-8 w-8 text-brown-600 animate-pulse" />
+              <span className="ml-2 text-xl font-bold text-brown-900">SimplyMedi</span>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 animate-slide-in-right">
               <Link
                 to="/login"
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-secondary-700 hover:text-brown-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
               >
                 Sign In
               </Link>
               <Link
                 to="/register"
-                className="btn-primary"
+                className="btn-primary interactive"
               >
                 Get Started
               </Link>
@@ -79,27 +79,28 @@ const LandingPage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary-600 to-secondary-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <section className="bg-gradient-to-br from-brown-600 via-coffee-700 to-secondary-800 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in-up">
               Understand Your Health Reports
-              <span className="block text-secondary-200">With AI-Powered Simplicity</span>
+              <span className="block text-brown-200 animate-slide-in-right">With AI-Powered Simplicity</span>
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-primary-100 max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl mb-8 text-brown-100 max-w-3xl mx-auto animate-fade-in-up">
               Transform complex medical terminology into clear, actionable insights. 
               Get personalized health recommendations and connect with healthcare professionals.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up">
               <Link
                 to="/register"
-                className="btn bg-white text-primary-600 hover:bg-gray-50 px-8 py-3 text-lg font-semibold"
+                className="btn bg-white text-brown-700 hover:bg-brown-50 px-8 py-3 text-lg font-semibold shadow-strong hover:shadow-brown interactive"
               >
                 Start Free Trial
               </Link>
               <Link
                 to="/register-doctor"
-                className="btn border-2 border-white text-white hover:bg-white hover:text-primary-600 px-8 py-3 text-lg font-semibold"
+                className="btn border-2 border-white text-white hover:bg-white hover:text-brown-700 px-8 py-3 text-lg font-semibold interactive"
               >
                 Join as Doctor
               </Link>
@@ -109,30 +110,30 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-gray-50">
+      <section className="py-24 bg-gradient-to-b from-brown-50 to-coffee-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-16 animate-fade-in-up">
+            <h2 className="text-3xl md:text-4xl font-bold text-brown-900 mb-4">
               Why Choose SimplyMedi?
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-secondary-700 max-w-2xl mx-auto">
               We're revolutionizing healthcare accessibility with cutting-edge AI technology 
               and a commitment to making health information understandable for everyone.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature) => (
-              <div key={feature.name} className="card p-6 hover:shadow-medium transition-shadow">
+            {features.map((feature, index) => (
+              <div key={feature.name} className="card p-6 hover-lift interactive animate-fade-in-up" style={{animationDelay: `${index * 0.1}s`}}>
                 <div className="flex items-center mb-4">
                   <div className="flex-shrink-0">
-                    <feature.icon className="h-8 w-8 text-primary-600" />
+                    <feature.icon className="h-8 w-8 text-brown-600 animate-float" />
                   </div>
-                  <h3 className="ml-3 text-lg font-semibold text-gray-900">
+                  <h3 className="ml-3 text-lg font-semibold text-brown-900">
                     {feature.name}
                   </h3>
                 </div>
-                <p className="text-gray-600">
+                <p className="text-secondary-700">
                   {feature.description}
                 </p>
               </div>

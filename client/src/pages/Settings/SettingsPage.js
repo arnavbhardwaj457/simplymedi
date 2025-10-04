@@ -4,8 +4,10 @@ import { toast } from 'react-hot-toast';
 import { BellIcon, LanguageIcon, SunIcon } from '@heroicons/react/24/outline';
 import api from '../../services/api';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const SettingsPage = () => {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -47,14 +49,14 @@ const SettingsPage = () => {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t('settings.title')}</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Notifications */}
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center mb-4">
             <BellIcon className="h-6 w-6 text-indigo-600 mr-3" />
-            <h2 className="text-lg font-medium text-gray-900">Notifications</h2>
+            <h2 className="text-lg font-medium text-gray-900">{t('settings.notifications')}</h2>
           </div>
           <div className="space-y-4">
             <div className="flex items-center justify-between">

@@ -42,7 +42,10 @@ router.post('/book', validateAppointment, async (req, res) => {
     // Check if doctor exists and is active
     const doctor = await Doctor.findOne({
       where: { id: doctorId, isActive: true },
-      include: ['user']
+      include: [{
+        model: User,
+        as: 'user'
+      }]
     });
 
     if (!doctor) {
@@ -51,11 +54,12 @@ router.post('/book', validateAppointment, async (req, res) => {
 
     // Check if doctor is available at the requested time
     const appointmentDateTime = new Date(appointmentDate);
-    const dayOfWeek = appointmentDateTime.toLocaleLowerCase().substring(0, 3);
+    const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][appointmentDateTime.getDay()];
     const timeString = appointmentDateTime.toTimeString().substring(0, 5);
 
-    if (!doctor.isAvailableAt(`${dayOfWeek} ${timeString}`)) {
-      return res.status(400).json({ error: 'Doctor is not available at the requested time' });
+    // Basic availability check (simplified)
+    if (doctor.availability && doctor.availability[dayOfWeek] && !doctor.availability[dayOfWeek].available) {
+      return res.status(400).json({ error: 'Doctor is not available on this day' });
     }
 
     // Check for existing appointments at the same time
@@ -126,7 +130,10 @@ router.get('/', async (req, res) => {
       include: [{
         model: Doctor,
         as: 'doctor',
-        include: ['user']
+        include: [{
+          model: User,
+          as: 'user'
+        }]
       }],
       order: [['appointmentDate', 'DESC']],
       limit: parseInt(limit),

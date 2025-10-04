@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout/Layout';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import PublicRoute from './components/Auth/PublicRoute';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 // Public pages
 import LandingPage from './pages/LandingPage';
@@ -35,8 +36,9 @@ import NotFoundPage from './pages/Error/NotFoundPage';
 
 function App() {
   return (
-    <div className="App">
-      <Routes>
+    <LanguageProvider>
+      <div className="App">
+        <Routes>
         {/* Public routes */}
         <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
@@ -111,7 +113,8 @@ function App() {
           },
         }}
       />
-    </div>
+      </div>
+    </LanguageProvider>
   );
 }
 

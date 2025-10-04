@@ -3,10 +3,13 @@ import { Link } from 'react-router-dom';
 import { UserIcon, StarIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import api from '../../services/api';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const DoctorsPage = () => {
+  const { t } = useLanguage();
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [specialization, setSpecialization] = useState('all');
 
   useEffect(() => {
@@ -15,10 +18,13 @@ const DoctorsPage = () => {
 
   const fetchDoctors = async () => {
     try {
-      const response = await api.get('/doctors');
-      setDoctors(response.data);
+      setError(null);
+      const response = await api.get('/doctors-public');
+      setDoctors(response.data?.doctors || []);
     } catch (error) {
       console.error('Error fetching doctors:', error);
+      setError(error.response?.data?.message || 'Failed to load doctors');
+      setDoctors([]);
     } finally {
       setLoading(false);
     }
@@ -35,12 +41,28 @@ const DoctorsPage = () => {
     return <LoadingSpinner />;
   }
 
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={fetchDoctors}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Our Doctors</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('ourDoctors')}</h1>
         <p className="mt-2 text-sm text-gray-600">
-          Find the right healthcare professional for your needs
+          {t('findTheRightHealthcareProfessional')}
         </p>
       </div>
 

@@ -14,6 +14,8 @@ const chatRoutes = require('./routes/chat-simple');
 const appointmentRoutes = require('./routes/appointments');
 const userRoutes = require('./routes/users');
 const doctorRoutes = require('./routes/doctors');
+const doctorsPublicRoutes = require('./routes/doctors-public');
+const languageRoutes = require('./routes/languages');
 const { errorHandler } = require('./middleware/errorHandler');
 const { authenticateToken } = require('./middleware/auth');
 const logger = require('./utils/logger');
@@ -95,7 +97,9 @@ app.use('/api/reports-simple', reportsSimpleRoutes); // Simplified upload withou
 app.use('/api/chat', chatRoutes);
 app.use('/api/appointments', authenticateToken, appointmentRoutes);
 app.use('/api/users', authenticateToken, userRoutes);
+app.use('/api/doctors-public', doctorsPublicRoutes); // Public doctors listing
 app.use('/api/doctors', authenticateToken, doctorRoutes);
+app.use('/api/languages', languageRoutes); // Language services (public access)
 
 // Error handling middleware
 app.use(errorHandler);

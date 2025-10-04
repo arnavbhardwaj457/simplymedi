@@ -229,7 +229,10 @@ router.patch('/profile/me', authenticateDoctor, validateDoctorUpdate, async (req
 
     const updatedDoctor = await Doctor.findOne({
       where: { userId: req.user.id },
-      include: ['user']
+      include: [{
+        model: User,
+        as: 'user'
+      }]
     });
 
     logger.info(`Doctor profile updated: ${req.user.id}`);
@@ -408,7 +411,10 @@ router.get('/dashboard/me', authenticateDoctor, async (req, res) => {
           [require('sequelize').Op.between]: [today, endOfDay]
         }
       },
-      include: ['patient'],
+      include: [{
+        model: User,
+        as: 'patient'
+      }],
       order: [['appointmentDate', 'ASC']]
     });
 
@@ -421,7 +427,10 @@ router.get('/dashboard/me', authenticateDoctor, async (req, res) => {
           [require('sequelize').Op.gte]: new Date()
         }
       },
-      include: ['patient'],
+      include: [{
+        model: User,
+        as: 'patient'
+      }],
       order: [['appointmentDate', 'ASC']],
       limit: 10
     });

@@ -16,7 +16,7 @@ import Card from '../../components/UI/Card';
 
 const DashboardPage = () => {
   const { user } = useAuth();
-  const { formatDate } = useLanguage();
+  const { t, formatDate } = useLanguage();
 
   const { data: dashboardData, isLoading, error } = useQuery(
     'dashboard',
@@ -47,15 +47,15 @@ const DashboardPage = () => {
 
   const quickActions = [
     {
-      name: 'Upload Report',
-      description: 'Upload a new medical report for AI analysis',
+      name: t('uploadReport'),
+      description: t('uploadReportDescription'),
       href: '/app/reports/upload',
       icon: DocumentTextIcon,
       color: 'primary',
     },
     {
-      name: 'Book Appointment',
-      description: 'Schedule an appointment with a doctor',
+      name: t('bookAppointment'),
+      description: t('bookAppointmentDescription'),
       href: '/app/appointments/book',
       icon: CalendarDaysIcon,
       color: 'secondary',
@@ -84,10 +84,10 @@ const DashboardPage = () => {
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-primary-600 to-secondary-600 rounded-lg p-6 text-white">
         <h1 className="text-2xl font-bold mb-2">
-          Welcome back, {user?.firstName}!
+          {t('welcomeBack')}, {user?.firstName}!
         </h1>
         <p className="text-primary-100">
-          Here's an overview of your health journey with SimplyMedi.
+          {t('healthJourneyOverview')}
         </p>
       </div>
 

@@ -11,6 +11,7 @@ const LanguagePreference = require('./LanguagePreference');
 // Define associations
 const setupAssociations = () => {
   // User associations
+  User.hasOne(Doctor, { foreignKey: 'userId', as: 'doctorProfile' });
   User.hasMany(Report, { foreignKey: 'userId', as: 'reports' });
   User.hasMany(ChatMessage, { foreignKey: 'userId', as: 'chatMessages' });
   User.hasMany(Appointment, { foreignKey: 'patientId', as: 'appointments' });
@@ -18,6 +19,7 @@ const setupAssociations = () => {
   User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
 
   // Doctor associations
+  Doctor.belongsTo(User, { foreignKey: 'userId', as: 'user' });
   Doctor.hasMany(Appointment, { foreignKey: 'doctorId', as: 'appointments' });
   Doctor.hasMany(Notification, { foreignKey: 'doctorId', as: 'notifications' });
 

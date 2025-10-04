@@ -3,10 +3,13 @@ import { Link } from 'react-router-dom';
 import { PlusIcon, CalendarIcon, ClockIcon, UserIcon } from '@heroicons/react/24/outline';
 import api from '../../services/api';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const AppointmentsPage = () => {
+  const { t } = useLanguage();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
@@ -15,10 +18,13 @@ const AppointmentsPage = () => {
 
   const fetchAppointments = async () => {
     try {
+      setError(null);
       const response = await api.get('/appointments');
-      setAppointments(response.data);
+      setAppointments(response.data || []);
     } catch (error) {
       console.error('Error fetching appointments:', error);
+      setError(error.response?.data?.message || 'Failed to load appointments');
+      setAppointments([]);
     } finally {
       setLoading(false);
     }
@@ -64,16 +70,32 @@ const AppointmentsPage = () => {
     return <LoadingSpinner />;
   }
 
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={fetchAppointments}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Appointments</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('appointments.title')}</h1>
         <Link
           to="/app/appointments/book"
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
-          Book Appointment
+          {t('appointments.book_appointment')}
         </Link>
       </div>
 

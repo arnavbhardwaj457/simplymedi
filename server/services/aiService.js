@@ -6,6 +6,7 @@ class AIService {
     this.huggingfaceApiKey = process.env.HUGGINGFACE_API_KEY;
     this.perplexityApiKey = process.env.PERPLEXITY_API_KEY;
     this.googleTranslateApiKey = process.env.GOOGLE_TRANSLATE_API_KEY;
+    this.geminiApiKey = process.env.GEMINI_API_KEY;
     
     // Specialized medical models for healthcare
     this.models = {
@@ -26,11 +27,14 @@ class AIService {
     if (!this.perplexityApiKey) {
       logger.warn('Perplexity API key not configured');
     }
+    if (!this.geminiApiKey) {
+      logger.warn('Gemini API key not configured');
+    }
   }
 
   // Check if AI services are available
   isAvailable() {
-    return !!(this.huggingfaceApiKey || this.perplexityApiKey);
+    return !!(this.huggingfaceApiKey || this.perplexityApiKey || this.geminiApiKey);
   }
 
   // Validate API keys before making requests
@@ -38,7 +42,8 @@ class AIService {
     const keys = {
       huggingface: this.huggingfaceApiKey,
       perplexity: this.perplexityApiKey,
-      google: this.googleTranslateApiKey
+      google: this.googleTranslateApiKey,
+      gemini: this.geminiApiKey
     };
     
     if (!keys[service]) {
@@ -47,10 +52,21 @@ class AIService {
     return true;
   }
 
-  // Medical term simplification using Hugging Face models
+  // Medical term simplification using AI models
   async simplifyMedicalTerms(text, targetLanguage = 'english') {
     try {
-      this.validateApiKey('huggingface');
+      // Try Gemini first if available
+      if (this.geminiApiKey && this.geminiApiKey !== 'your_gemini_api_key') {
+        try {
+          return await this.simplifyWithGemini(text, targetLanguage);
+        } catch (error) {
+          logger.error('Gemini simplification error, falling back:', error);
+        }
+      }
+
+      // Fallback to HuggingFace
+      if (this.huggingfaceApiKey && this.huggingfaceApiKey !== 'your_huggingface_api_key') {
+        this.validateApiKey('huggingface');
       
       // Use a text generation model for simplification
       const response = await axios.post(
@@ -76,10 +92,116 @@ class AIService {
         return response.data[0]?.generated_text || text;
       }
       return response.data?.generated_text || text;
+      }
+      
+      // If no API available, return original text
+      return text;
     } catch (error) {
       logger.error('Error simplifying medical terms:', error);
       // Return original text as fallback
       return text;
+    }
+  }
+
+  // Simplify medical text using Gemini
+  async simplifyWithGemini(text, targetLanguage = 'english') {
+    try {
+      const languageNames = {
+        'english': 'English',
+        'hindi': 'Hindi',
+        'spanish': 'Spanish',
+        'french': 'French',
+        'german': 'German',
+        'chinese': 'Chinese',
+        'arabic': 'Arabic',
+        'bengali': 'Bengali',
+        'tamil': 'Tamil',
+        'telugu': 'Telugu',
+        'gujarati': 'Gujarati',
+        'kannada': 'Kannada',
+        'marathi': 'Marathi',
+        'punjabi': 'Punjabi'
+      };
+
+      const langName = languageNames[targetLanguage.toLowerCase()] || 'English';
+
+      const prompt = `You are a medical translation expert. Simplify the following medical text into easy-to-understand ${langName} language that a patient can comprehend:
+
+Medical Text: ${text}
+
+Requirements:
+1. Use simple, non-technical language in ${langName}
+2. Explain medical terms in everyday words
+3. Maintain medical accuracy while making it accessible
+4. Keep the same meaning but make it patient-friendly
+5. Respond only with the simplified text in ${langName}
+
+Simplified Text:`;
+
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.geminiApiKey}`,
+        {
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 1000,
+            candidateCount: 1
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const simplifiedText = response.data.candidates[0].content.parts[0].text.trim();
+      return simplifiedText;
+    } catch (error) {
+      logger.error('Error simplifying with Gemini:', error);
+      throw error;
+    }
+  }
+
+  // Language detection using Gemini
+  async detectLanguageWithGemini(text) {
+    try {
+      const prompt = `Detect the language of the following text and respond with only the language name in lowercase English (e.g., "english", "hindi", "arabic", "bengali", "tamil", "telugu", "gujarati", "kannada", "marathi", "punjabi", "french", "spanish", "chinese", "german"):
+
+Text: ${text}
+
+Language:`;
+
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.geminiApiKey}`,
+        {
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 50,
+            candidateCount: 1
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const detectedLanguage = response.data.candidates[0].content.parts[0].text.trim().toLowerCase();
+      return detectedLanguage;
+    } catch (error) {
+      logger.error('Error detecting language with Gemini:', error);
+      throw error;
     }
   }
 
@@ -126,10 +248,85 @@ class AIService {
     }
   }
 
+  // Generate health recommendations using Gemini
+  async generateRecommendationsWithGemini(medicalData, userProfile) {
+    try {
+      const prompt = `As a medical AI, analyze the following medical report data and user profile to provide personalized health recommendations:
+
+Medical Report Data:
+${JSON.stringify(medicalData, null, 2)}
+
+User Profile:
+${JSON.stringify(userProfile, null, 2)}
+
+Provide evidence-based health recommendations in JSON format with the following structure:
+{
+  "dietary": ["specific dietary recommendation 1", "specific dietary recommendation 2", "specific dietary recommendation 3"],
+  "lifestyle": ["specific lifestyle recommendation 1", "specific lifestyle recommendation 2", "specific lifestyle recommendation 3"],
+  "exercise": ["specific exercise recommendation 1", "specific exercise recommendation 2", "specific exercise recommendation 3"],
+  "followUpActions": ["specific follow-up action 1", "specific follow-up action 2", "specific follow-up action 3"],
+  "warningSignsToWatch": ["warning sign 1", "warning sign 2", "warning sign 3"]
+}
+
+Focus on actionable, specific, and medically sound recommendations based on the medical data provided. Respond only with valid JSON.`;
+
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.geminiApiKey}`,
+        {
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 1000,
+            candidateCount: 1
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const responseText = response.data.candidates[0].content.parts[0].text.trim();
+      
+      // Clean up the response to extract JSON
+      let jsonText = responseText;
+      if (jsonText.includes('```json')) {
+        jsonText = jsonText.split('```json')[1].split('```')[0];
+      } else if (jsonText.includes('```')) {
+        jsonText = jsonText.split('```')[1].split('```')[0];
+      }
+      
+      try {
+        return JSON.parse(jsonText.trim());
+      } catch (parseError) {
+        logger.error('Error parsing Gemini recommendations JSON:', parseError);
+        // Return fallback recommendations
+        return this.getFallbackRecommendations();
+      }
+    } catch (error) {
+      logger.error('Error generating recommendations with Gemini:', error);
+      throw error;
+    }
+  }
+
   // Generate health recommendations
   async generateHealthRecommendations(medicalData, userProfile) {
     try {
-      // Try Perplexity API first
+      // Try Gemini API first
+      if (this.geminiApiKey && this.geminiApiKey !== 'your_gemini_api_key') {
+        try {
+          return await this.generateRecommendationsWithGemini(medicalData, userProfile);
+        } catch (error) {
+          logger.error('Gemini API error for recommendations, falling back:', error);
+        }
+      }
+
+      // Try Perplexity API as fallback
       if (this.perplexityApiKey) {
         try {
           const prompt = `
@@ -155,15 +352,15 @@ class AIService {
               messages: [
                 {
                   role: 'system',
-                  content: 'You are a medical AI assistant that provides personalized health recommendations based on medical data. Always recommend consulting with healthcare professionals for serious conditions. Respond only with valid JSON.'
+                  content: 'Professional medical AI providing evidence-based health recommendations. Generate concise, clinical recommendations in JSON format. Always recommend healthcare provider consultation for medical management.'
                 },
                 {
                   role: 'user',
                   content: prompt
                 }
               ],
-              max_tokens: 1000,
-              temperature: 0.7
+              max_tokens: 500,
+              temperature: 0.3
             },
             {
               headers: {
@@ -197,29 +394,29 @@ class AIService {
     // Generate basic recommendations based on available data
     const recommendations = {
       dietary: [
-        "Maintain a balanced diet rich in fruits and vegetables",
-        "Stay adequately hydrated by drinking plenty of water",
-        "Limit processed foods and excessive sodium intake"
+        "Mediterranean diet: fruits, vegetables, whole grains",
+        "Adequate hydration: 8-10 glasses water daily",
+        "Limit processed foods, sodium <2300mg/day"
       ],
       lifestyle: [
-        "Maintain regular sleep schedule (7-9 hours per night)",
-        "Manage stress through relaxation techniques",
-        "Avoid smoking and limit alcohol consumption"
+        "Sleep hygiene: 7-9 hours nightly",
+        "Stress management: relaxation techniques",
+        "Smoking cessation, alcohol moderation"
       ],
       exercise: [
-        "Engage in regular physical activity as advised by your healthcare provider",
-        "Include both cardiovascular and strength training exercises",
-        "Start slowly and gradually increase intensity"
+        "Aerobic activity: 150 min/week moderate intensity",
+        "Resistance training: 2 sessions/week",
+        "Progressive activity increase per tolerance"
       ],
       followUpActions: [
-        "Schedule regular check-ups with your healthcare provider",
-        "Monitor any symptoms and report changes to your doctor",
-        "Keep track of your medical history and medications"
+        "Regular physician follow-up",
+        "Symptom monitoring and documentation",
+        "Medication adherence tracking"
       ],
       warningSignsToWatch: [
-        "Unusual or persistent symptoms",
-        "Severe pain or discomfort",
-        "Changes in vital signs or overall health status"
+        "Acute symptom onset or worsening",
+        "Severe pain (>7/10 scale)",
+        "Vital sign abnormalities"
       ]
     };
 
@@ -272,9 +469,82 @@ class AIService {
     }
   }
 
+  // Chat with Gemini AI
+  async chatWithGemini(message, context = {}, language = 'english') {
+    try {
+      const languageNames = {
+        'english': 'English',
+        'hindi': 'Hindi',
+        'spanish': 'Spanish',
+        'french': 'French',
+        'german': 'German',
+        'chinese': 'Chinese',
+        'arabic': 'Arabic',
+        'bengali': 'Bengali',
+        'tamil': 'Tamil',
+        'telugu': 'Telugu',
+        'gujarati': 'Gujarati',
+        'kannada': 'Kannada',
+        'marathi': 'Marathi',
+        'punjabi': 'Punjabi'
+      };
+
+      const langName = languageNames[language.toLowerCase()] || 'English';
+      
+      const systemPrompt = `You are a professional medical AI assistant. Respond in ${langName} language with:
+- Maximum 3 concise clinical points
+- Professional medical terminology appropriate for the language
+- No casual language or emojis
+- Always include "Consult healthcare provider" warning in ${langName}
+- Use clear, structured format
+
+Patient Context: ${JSON.stringify(context)}
+
+Medical Question: ${message}
+
+Provide a professional medical response in ${langName}.`;
+
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.geminiApiKey}`,
+        {
+          contents: [{
+            parts: [{
+              text: systemPrompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 500,
+            candidateCount: 1
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const aiResponse = response.data.candidates[0].content.parts[0].text.trim();
+      return aiResponse;
+    } catch (error) {
+      logger.error('Gemini chat error:', error);
+      throw error;
+    }
+  }
+
   // Chat with AI assistant
   async chatWithAI(message, context = {}, language = 'english') {
-    // Try HuggingFace DialoGPT first if available
+    // Try Gemini first if available
+    if (this.geminiApiKey && this.geminiApiKey !== 'your_gemini_api_key') {
+      try {
+        return await this.chatWithGemini(message, context, language);
+      } catch (error) {
+        logger.error('Gemini API error, trying other fallbacks:', error);
+      }
+    }
+
+    // Try HuggingFace DialoGPT as fallback
     if (this.huggingfaceApiKey && this.huggingfaceApiKey !== 'your_huggingface_api_key') {
       try {
         return await this.chatWithHuggingFace(message, context);
@@ -286,17 +556,14 @@ class AIService {
     // Try Perplexity API as fallback if available
     if (this.perplexityApiKey && this.perplexityApiKey !== 'your_perplexity_api_key') {
       try {
-        const systemPrompt = `
-          You are a medical AI assistant helping patients understand their health reports. 
-          You should:
-          - Provide clear, simple explanations
-          - Use patient-friendly language
-          - Always recommend consulting healthcare professionals for serious concerns
-          - Be empathetic and supportive
-          - Respond in ${language}
-          
-          Context: ${JSON.stringify(context)}
-        `;
+        const systemPrompt = `Professional medical AI. Respond in ${language} with:
+• Maximum 3 concise clinical points
+• Professional medical terminology
+• No casual language or emojis
+• Include "Consult healthcare provider" warning
+• Use bullet format: **Topic:** followed by brief points
+
+Context: ${JSON.stringify(context)}`;
 
         const response = await axios.post(
           'https://api.perplexity.ai/chat/completions',
@@ -312,8 +579,8 @@ class AIService {
                 content: message
               }
             ],
-            max_tokens: 500,
-            temperature: 0.7
+            max_tokens: 300,
+            temperature: 0.3
           },
           {
             headers: {
@@ -340,114 +607,103 @@ class AIService {
     // Blood pressure related responses
     if (messageLower.includes('blood pressure') || messageLower.includes('bp') || messageLower.includes('hypertension')) {
       if (messageLower.includes('high') || messageLower.includes('elevated')) {
-        return `High blood pressure (hypertension) can be concerning. Here are some general recommendations:
+        return `**Elevated Blood Pressure Management:**
 
-• Monitor your blood pressure regularly
-• Reduce sodium intake (less than 2,300mg per day)
-• Exercise regularly (at least 30 minutes, 5 days a week)
-• Maintain a healthy weight
-• Limit alcohol consumption
-• Manage stress through relaxation techniques
-• Take prescribed medications as directed
+• Monitor BP regularly and maintain <120/80 mmHg
+• Reduce sodium intake (<2,300mg/day)
+• Exercise 150 min/week moderate activity
+• Maintain healthy BMI and manage stress
 
-**Important: Please consult with your healthcare provider for personalized treatment and to rule out underlying conditions.**`;
+**Consult your healthcare provider for personalized treatment plan.**`;
       } else if (messageLower.includes('symptoms') || messageLower.includes('symptom')) {
-        return `Common symptoms of high blood pressure include:
+        return `**Hypertension Symptoms:**
 
-**Early stages:** Often no symptoms (why it's called "silent killer")
+• **Early Stage:** Usually asymptomatic
+• **Advanced:** Headaches, dizziness, blurred vision
+• **Severe:** Chest pain, confusion, breathing difficulty
 
-**Advanced stages may include:**
-• Headaches (especially in the morning)
-• Dizziness or lightheadedness  
-• Blurred vision
-• Chest pain
-• Shortness of breath
-• Nausea
-• Fatigue
-
-**Severe hypertension symptoms:**
-• Severe headaches
-• Vision problems
-• Confusion
-• Chest pain
-• Difficulty breathing
-
-**⚠️ If you experience severe symptoms, seek immediate medical attention. Regular monitoring is essential as high BP often has no symptoms.**`;
+**⚠️ Seek immediate care for severe symptoms. Regular monitoring essential.**`;
       }
-      return `Blood pressure is an important health indicator. Normal BP is typically below 120/80 mmHg. If you have concerns about your blood pressure, I recommend monitoring it regularly and consulting with your healthcare provider for personalized advice.`;
+      return `**Blood Pressure Assessment:**
+
+• Normal range: <120/80 mmHg
+• Regular monitoring recommended
+• Risk stratification requires clinical evaluation
+
+**Consult healthcare provider for personalized assessment.**`;
     }
 
     // Diabetes related responses
     if (messageLower.includes('diabetes') || messageLower.includes('blood sugar') || messageLower.includes('glucose')) {
-      return `For diabetes management, consider these general guidelines:
+      return `**Diabetes Management Guidelines:**
 
-• Monitor blood sugar levels as recommended by your doctor
-• Follow a balanced diet with controlled carbohydrate intake
-• Exercise regularly to help control blood sugar
-• Take medications as prescribed
-• Stay hydrated
-• Check feet daily for any wounds or changes
-• Regular eye and kidney checkups
+• Monitor blood glucose as prescribed
+• Maintain controlled carbohydrate diet
+• Exercise regularly (150 min/week)
+• Daily foot inspection and regular screenings
 
-**Always consult your healthcare provider for personalized diabetes management plans.**`;
+**Consult healthcare provider for individualized management plan.**`;
+    }
+
+    // Tuberculosis and respiratory symptoms
+    if (messageLower.includes('tuberculosis') || messageLower.includes('tb') || 
+        (messageLower.includes('cough') && (messageLower.includes('persistent') || messageLower.includes('chronic'))) ||
+        (messageLower.includes('symptoms') && messageLower.includes('tuberculosis'))) {
+      return `**Tuberculosis Assessment:**
+
+• **Common symptoms:** Persistent cough (>3 weeks), night sweats, weight loss
+• **Advanced:** Hemoptysis, fever, fatigue
+• **Risk factors:** HIV, diabetes, malnutrition, close contact
+
+**⚠️ Persistent respiratory symptoms require immediate medical evaluation and testing.**`;
     }
 
     // Heart related responses
     if (messageLower.includes('heart') || messageLower.includes('cardiac') || messageLower.includes('chest pain')) {
-      return `Heart health is crucial. For general heart wellness:
+      return `**Cardiovascular Health Protocol:**
 
-• Eat a heart-healthy diet (fruits, vegetables, whole grains, lean proteins)
-• Exercise regularly (as approved by your doctor)
-• Avoid smoking and limit alcohol
-• Manage stress
-• Get adequate sleep (7-9 hours)
-• Control blood pressure and cholesterol
+• Heart-healthy diet: fruits, vegetables, lean proteins
+• Regular exercise (physician-approved)
+• Smoking cessation, limited alcohol intake
+• BP and cholesterol management
 
-**⚠️ If you're experiencing chest pain, shortness of breath, or other concerning symptoms, seek immediate medical attention.**`;
+**⚠️ Chest pain or dyspnea requires immediate medical attention.**`;
     }
 
     // Weight/obesity related responses
     if (messageLower.includes('weight') || messageLower.includes('obesity') || messageLower.includes('overweight')) {
-      return `For healthy weight management:
+      return `**Weight Management Protocol:**
 
-• Aim for gradual weight loss (1-2 pounds per week)
-• Focus on a balanced diet with portion control
-• Include regular physical activity
-• Stay hydrated
-• Get adequate sleep
-• Track your progress
-• Consider consulting a nutritionist
+• Target 1-2 lbs/week gradual loss
+• Caloric deficit with balanced nutrition
+• Regular physical activity (150 min/week)
+• Adequate hydration and sleep
 
-**Consult your healthcare provider before starting any weight loss program, especially if you have underlying health conditions.**`;
+**Consult physician before initiating weight loss program.**`;
     }
 
     // Pain related responses
     if (messageLower.includes('pain') || messageLower.includes('ache') || messageLower.includes('hurt')) {
-      return `For pain management, here are some general approaches:
+      return `**Pain Management Guidelines:**
 
-• Apply ice for acute injuries (first 24-48 hours)
-• Use heat for muscle tension and chronic pain
-• Over-the-counter pain relievers (follow package directions)
-• Gentle stretching and movement when possible
-• Rest the affected area
-• Maintain good posture
+• Ice for acute injury (24-48hrs), heat for chronic pain
+• OTC analgesics per package instructions
+• Gentle mobilization and proper positioning
+• Activity modification as tolerated
 
-**⚠️ Seek medical attention if pain is severe, persistent, or accompanied by other concerning symptoms.**`;
+**⚠️ Severe or persistent pain requires medical evaluation.**`;
     }
 
     // General medication questions
     if (messageLower.includes('medication') || messageLower.includes('medicine') || messageLower.includes('drug')) {
-      return `Regarding medications:
+      return `**Medication Safety Protocol:**
 
-• Always take as prescribed by your healthcare provider
-• Don't stop medications without consulting your doctor
-• Be aware of potential side effects
-• Store medications properly
-• Check expiration dates
-• Keep an updated list of all medications
-• Inform all healthcare providers about your medications
+• Take as prescribed; do not alter without physician consultation
+• Monitor for adverse effects and drug interactions
+• Proper storage and expiration date monitoring
+• Maintain current medication list for all providers
 
-**Never adjust dosages or stop medications without medical guidance.**`;
+**Dosage modifications require medical supervision.**`;
     }
 
     // Lab results/reports
@@ -523,25 +779,95 @@ class AIService {
     }
 
     // General health question fallback
-    return `Thank you for your health question. While I can provide general health information, I strongly recommend discussing your specific concerns with a qualified healthcare provider who can:
+    return `**Clinical Assessment Required:**
 
-• Review your complete medical history
-• Perform necessary examinations
-• Order appropriate tests if needed
-• Provide personalized treatment recommendations
+• Symptom evaluation requires medical examination
+• Individual risk factors and history need review  
+• Diagnostic testing may be indicated
 
-**For urgent medical concerns, please contact your healthcare provider immediately or seek emergency care.**
-
-Is there a specific aspect of your health question you'd like me to address with general information?`;
+**Consult healthcare provider for proper evaluation and treatment planning.**`;
   }
 
   // Translate text to target language
   async translateText(text, targetLanguage, sourceLanguage = 'auto') {
     try {
-      // If Google Translate API key is not configured, use HuggingFace translation
-      if (!this.googleTranslateApiKey || this.googleTranslateApiKey === 'your_google_translate_api_key') {
-        return await this.translateWithHuggingFace(text, targetLanguage, sourceLanguage);
+      // Try Gemini first if available
+      if (this.geminiApiKey && this.geminiApiKey !== 'your_gemini_api_key') {
+        return await this.translateWithGemini(text, targetLanguage, sourceLanguage);
       }
+      
+      // Fallback to Google Translate API
+      if (this.googleTranslateApiKey && this.googleTranslateApiKey !== 'your_google_translate_api_key') {
+        return await this.translateWithGoogleTranslate(text, targetLanguage, sourceLanguage);
+      }
+      
+      // Final fallback to HuggingFace translation
+      return await this.translateWithHuggingFace(text, targetLanguage, sourceLanguage);
+    } catch (error) {
+      logger.error('Error in primary translation, falling back:', error);
+      // Fallback to HuggingFace translation
+      return await this.translateWithHuggingFace(text, targetLanguage, sourceLanguage);
+    }
+  }
+
+  // Primary translation using Gemini API
+  async translateWithGemini(text, targetLanguage, sourceLanguage = 'auto') {
+    try {
+      const languageNames = {
+        'hi': 'Hindi',
+        'es': 'Spanish', 
+        'fr': 'French',
+        'de': 'German',
+        'zh': 'Chinese',
+        'ar': 'Arabic',
+        'bn': 'Bengali',
+        'ta': 'Tamil',
+        'te': 'Telugu',
+        'gu': 'Gujarati',
+        'kn': 'Kannada',
+        'mr': 'Marathi',
+        'pa': 'Punjabi',
+        'en': 'English'
+      };
+
+      const targetLangName = languageNames[targetLanguage] || targetLanguage;
+      const sourceLangName = sourceLanguage === 'auto' ? '' : (languageNames[sourceLanguage] || sourceLanguage);
+
+      const prompt = sourceLangName 
+        ? `Translate the following text from ${sourceLangName} to ${targetLangName}. Provide only the translation without any additional text:\n\n${text}`
+        : `Translate the following text to ${targetLangName}. Provide only the translation without any additional text:\n\n${text}`;
+
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.geminiApiKey}`,
+        {
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 2048
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const translatedText = response.data.candidates[0].content.parts[0].text.trim();
+      return translatedText;
+    } catch (error) {
+      logger.error('Error translating with Gemini:', error);
+      throw error;
+    }
+  }
+
+  // Google Translate API method
+  async translateWithGoogleTranslate(text, targetLanguage, sourceLanguage = 'auto') {
+    try {
 
       const response = await axios.post(
         `https://translation.googleapis.com/language/translate/v2?key=${this.googleTranslateApiKey}`,
