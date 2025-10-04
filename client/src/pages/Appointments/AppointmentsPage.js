@@ -20,10 +20,11 @@ const AppointmentsPage = () => {
     try {
       setError(null);
       const response = await api.get('/appointments');
-      setAppointments(response.data || []);
+      // API returns { appointments: [...], pagination: {...} }
+      setAppointments(response.data.appointments || []);
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      setError(error.response?.data?.message || 'Failed to load appointments');
+      setError(error.response?.data?.error || error.response?.data?.message || 'Failed to load appointments');
       setAppointments([]);
     } finally {
       setLoading(false);
@@ -39,12 +40,16 @@ const AppointmentsPage = () => {
     switch (status) {
       case 'confirmed':
         return 'bg-green-100 text-green-800';
-      case 'pending':
+      case 'scheduled':
         return 'bg-yellow-100 text-yellow-800';
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       case 'completed':
         return 'bg-blue-100 text-blue-800';
+      case 'no-show':
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -112,6 +117,16 @@ const AppointmentsPage = () => {
           All Appointments
         </button>
         <button
+          onClick={() => setFilter('scheduled')}
+          className={`px-3 py-2 rounded-md text-sm font-medium ${
+            filter === 'scheduled'
+              ? 'bg-indigo-100 text-indigo-700'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Scheduled
+        </button>
+        <button
           onClick={() => setFilter('confirmed')}
           className={`px-3 py-2 rounded-md text-sm font-medium ${
             filter === 'confirmed'
@@ -120,16 +135,6 @@ const AppointmentsPage = () => {
           }`}
         >
           Confirmed
-        </button>
-        <button
-          onClick={() => setFilter('pending')}
-          className={`px-3 py-2 rounded-md text-sm font-medium ${
-            filter === 'pending'
-              ? 'bg-indigo-100 text-indigo-700'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Pending
         </button>
         <button
           onClick={() => setFilter('completed')}
@@ -179,7 +184,7 @@ const AppointmentsPage = () => {
                   </div>
                   <div className="ml-4">
                     <h3 className="text-lg font-medium text-gray-900">
-                      Dr. {appointment.doctor?.firstName} {appointment.doctor?.lastName}
+                      Dr. {appointment.doctor?.name || `${appointment.doctor?.firstName || ''} ${appointment.doctor?.lastName || ''}`}
                     </h3>
                     <p className="text-sm text-gray-500">
                       {appointment.doctor?.specialization}
@@ -217,7 +222,7 @@ const AppointmentsPage = () => {
                 >
                   View Details
                 </Link>
-                {appointment.status === 'pending' && (
+                {(appointment.status === 'scheduled' || appointment.status === 'confirmed') && (
                   <button className="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                     Cancel
                   </button>

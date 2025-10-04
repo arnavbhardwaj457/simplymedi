@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { 
@@ -6,17 +6,49 @@ import {
   CalendarDaysIcon,
   ChatBubbleLeftRightIcon,
   PlusIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  DevicePhoneMobileIcon
 } from '@heroicons/react/24/outline';
 import { usersAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useTranslatedTexts } from '../../hooks/useTranslation';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import Card from '../../components/UI/Card';
 
 const DashboardPage = () => {
   const { user } = useAuth();
-  const { t, formatDate } = useLanguage();
+  const { t, formatDate, currentLanguage } = useLanguage();
+
+  // Dynamic translation for UI elements
+  const uiTexts = [
+    'Chat with AI',
+    'Get instant answers to health questions',
+    'Telegram Bot',
+    'Chat with SimplyMedi on Telegram for instant updates',
+    'Welcome back',
+    'Quick Actions',
+    'Get started',
+    'Loading dashboard...',
+    'Total Reports',
+    'Appointments',
+    'Chat Sessions',
+    'Processed',
+    'Here\'s an overview of your health journey with SimplyMedi',
+    'Upload Report',
+    'Upload a new medical report for AI analysis',
+    'Book Appointment',
+    'Schedule an appointment with a doctor',
+    'Recent Reports',
+    'View all',
+    'Upcoming Appointments',
+    'No reports yet',
+    'Upload your first medical report to get started',
+    'No upcoming appointments',
+    'Book your first appointment'
+  ];
+
+  const { translations, isTranslating } = useTranslatedTexts(uiTexts, 'general');
 
   const { data: dashboardData, isLoading, error } = useQuery(
     'dashboard',
@@ -30,20 +62,26 @@ const DashboardPage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="lg" text="Loading dashboard..." />
+        <LoadingSpinner size="lg" text={translations['Loading dashboard...'] || 'Loading dashboard...'} />
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-danger-600">Failed to load dashboard data</p>
-      </div>
-    );
+    console.error('Dashboard error:', error);
+    // Show dashboard with default values on error
   }
 
-  const { recentReports, upcomingAppointments, statistics } = dashboardData || {};
+  const { recentReports, upcomingAppointments, statistics } = dashboardData || { 
+    recentReports: [], 
+    upcomingAppointments: [], 
+    statistics: { 
+      totalReports: 0, 
+      totalAppointments: 0, 
+      completedAppointments: 0, 
+      processedReports: 0 
+    } 
+  };
 
   const quickActions = [
     {
@@ -61,11 +99,19 @@ const DashboardPage = () => {
       color: 'secondary',
     },
     {
-      name: 'Chat with AI',
-      description: 'Get instant answers to health questions',
+      name: translations['Chat with AI'] || 'Chat with AI',
+      description: translations['Get instant answers to health questions'] || 'Get instant answers to health questions',
       href: '/app/chat',
       icon: ChatBubbleLeftRightIcon,
       color: 'success',
+    },
+    {
+      name: translations['Telegram Bot'] || 'Telegram Bot',
+      description: translations['Chat with SimplyMedi on Telegram for instant updates'] || 'Chat with SimplyMedi on Telegram for instant updates',
+      href: 'https://t.me/SimplyMediBot',
+      icon: DevicePhoneMobileIcon,
+      color: 'info',
+      external: true,
     },
   ];
 
@@ -84,10 +130,10 @@ const DashboardPage = () => {
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-primary-600 to-secondary-600 rounded-lg p-6 text-white">
         <h1 className="text-2xl font-bold mb-2">
-          {t('welcomeBack')}, {user?.firstName}!
+          {translations['Welcome back'] || t('welcomeBack')}, {user?.firstName}!
         </h1>
         <p className="text-primary-100">
-          {t('healthJourneyOverview')}
+          {translations['Here\'s an overview of your health journey with SimplyMedi'] || t('healthJourneyOverview')}
         </p>
       </div>
 
@@ -99,7 +145,7 @@ const DashboardPage = () => {
               <DocumentTextIcon className="h-8 w-8 text-primary-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total Reports</p>
+              <p className="text-sm font-medium text-gray-500">{translations['Total Reports'] || 'Total Reports'}</p>
               <p className="text-2xl font-semibold text-gray-900">
                 {statistics?.totalReports || 0}
               </p>
@@ -113,7 +159,7 @@ const DashboardPage = () => {
               <CalendarDaysIcon className="h-8 w-8 text-secondary-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Appointments</p>
+              <p className="text-sm font-medium text-gray-500">{translations['Appointments'] || 'Appointments'}</p>
               <p className="text-2xl font-semibold text-gray-900">
                 {statistics?.totalAppointments || 0}
               </p>
@@ -127,7 +173,7 @@ const DashboardPage = () => {
               <ChatBubbleLeftRightIcon className="h-8 w-8 text-success-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Chat Sessions</p>
+              <p className="text-sm font-medium text-gray-500">{translations['Chat Sessions'] || 'Chat Sessions'}</p>
               <p className="text-2xl font-semibold text-gray-900">
                 {statistics?.completedAppointments || 0}
               </p>
@@ -141,7 +187,7 @@ const DashboardPage = () => {
               <DocumentTextIcon className="h-8 w-8 text-warning-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Processed</p>
+              <p className="text-sm font-medium text-gray-500">{translations['Processed'] || 'Processed'}</p>
               <p className="text-2xl font-semibold text-gray-900">
                 {statistics?.processedReports || 0}
               </p>
@@ -152,31 +198,53 @@ const DashboardPage = () => {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {quickActions.map((action) => (
-            <Link
-              key={action.name}
-              to={action.href}
-              className="card p-6 hover:shadow-medium transition-shadow group"
-            >
-              <div className="flex items-center mb-4">
-                <div className={`p-3 rounded-lg bg-${action.color}-100 group-hover:bg-${action.color}-200 transition-colors`}>
-                  <action.icon className={`h-6 w-6 text-${action.color}-600`} />
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{translations['Quick Actions'] || 'Quick Actions'}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {quickActions.map((action) => {
+            const content = (
+              <>
+                <div className="flex items-center mb-4">
+                  <div className={`p-3 rounded-lg bg-${action.color}-100 group-hover:bg-${action.color}-200 transition-colors`}>
+                    <action.icon className={`h-6 w-6 text-${action.color}-600`} />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {action.name}
+                    </h3>
+                  </div>
                 </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {action.name}
-                  </h3>
+                <p className="text-gray-600 mb-4">{action.description}</p>
+                <div className="flex items-center text-primary-600 font-medium">
+                  <span>{translations['Get started'] || 'Get started'}</span>
+                  <ArrowRightIcon className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
-              </div>
-              <p className="text-gray-600 mb-4">{action.description}</p>
-              <div className="flex items-center text-primary-600 font-medium">
-                <span>Get started</span>
-                <ArrowRightIcon className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-          ))}
+              </>
+            );
+
+            if (action.external) {
+              return (
+                <a
+                  key={action.name}
+                  href={action.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="card p-6 hover:shadow-medium transition-shadow group"
+                >
+                  {content}
+                </a>
+              );
+            }
+
+            return (
+              <Link
+                key={action.name}
+                to={action.href}
+                className="card p-6 hover:shadow-medium transition-shadow group"
+              >
+                {content}
+              </Link>
+            );
+          })}
         </div>
       </div>
 

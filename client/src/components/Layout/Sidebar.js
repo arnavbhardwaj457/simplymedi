@@ -11,25 +11,30 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslatedTexts } from '../../hooks/useTranslation';
 
 const Sidebar = ({ isOpen, onClose, userType = 'user' }) => {
   const { user, doctor } = useAuth();
 
+  // Translate sidebar menu items
+  const menuTexts = ['Dashboard', 'Reports', 'Chat', 'Appointments', 'Doctors', 'Profile', 'Settings'];
+  const { translations } = useTranslatedTexts(menuTexts, 'navigation');
+
   const userNavigation = [
-    { name: 'Dashboard', href: '/app/dashboard', icon: HomeIcon },
-    { name: 'Reports', href: '/app/reports', icon: DocumentTextIcon },
-    { name: 'Chat', href: '/app/chat', icon: ChatBubbleLeftRightIcon },
-    { name: 'Appointments', href: '/app/appointments', icon: CalendarDaysIcon },
-    { name: 'Doctors', href: '/app/doctors', icon: UserGroupIcon },
-    { name: 'Profile', href: '/app/profile', icon: UserIcon },
-    { name: 'Settings', href: '/app/settings', icon: Cog6ToothIcon },
+    { name: 'Dashboard', translatedName: translations['Dashboard'] || 'Dashboard', href: '/app/dashboard', icon: HomeIcon },
+    { name: 'Reports', translatedName: translations['Reports'] || 'Reports', href: '/app/reports', icon: DocumentTextIcon },
+    { name: 'Chat', translatedName: translations['Chat'] || 'Chat', href: '/app/chat', icon: ChatBubbleLeftRightIcon },
+    { name: 'Appointments', translatedName: translations['Appointments'] || 'Appointments', href: '/app/appointments', icon: CalendarDaysIcon },
+    { name: 'Doctors', translatedName: translations['Doctors'] || 'Doctors', href: '/app/doctors', icon: UserGroupIcon },
+    { name: 'Profile', translatedName: translations['Profile'] || 'Profile', href: '/app/profile', icon: UserIcon },
+    { name: 'Settings', translatedName: translations['Settings'] || 'Settings', href: '/app/settings', icon: Cog6ToothIcon },
   ];
 
   const doctorNavigation = [
-    { name: 'Dashboard', href: '/app/doctor/dashboard', icon: HomeIcon },
-    { name: 'Appointments', href: '/app/doctor/appointments', icon: CalendarDaysIcon },
-    { name: 'Profile', href: '/app/doctor/profile', icon: UserIcon },
-    { name: 'Settings', href: '/app/settings', icon: Cog6ToothIcon },
+    { name: 'Dashboard', translatedName: translations['Dashboard'] || 'Dashboard', href: '/app/doctor/dashboard', icon: HomeIcon },
+    { name: 'Appointments', translatedName: translations['Appointments'] || 'Appointments', href: '/app/doctor/appointments', icon: CalendarDaysIcon },
+    { name: 'Profile', translatedName: translations['Profile'] || 'Profile', href: '/app/doctor/profile', icon: UserIcon },
+    { name: 'Settings', translatedName: translations['Settings'] || 'Settings', href: '/app/settings', icon: Cog6ToothIcon },
   ];
 
   const navigation = userType === 'doctor' ? doctorNavigation : userNavigation;
@@ -72,7 +77,7 @@ const Sidebar = ({ isOpen, onClose, userType = 'user' }) => {
                       : 'text-brown-400 group-hover:text-brown-600'
                   }`}
                 />
-                {item.name}
+                {item.translatedName}
               </NavLink>
             ))}
           </div>
@@ -105,7 +110,7 @@ const Sidebar = ({ isOpen, onClose, userType = 'user' }) => {
                     : 'text-brown-400 group-hover:text-brown-600'
                 }`}
               />
-              {item.name}
+              {item.translatedName}
             </NavLink>
           ))}
         </nav>

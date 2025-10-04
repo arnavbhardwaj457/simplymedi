@@ -133,18 +133,18 @@ class AIService {
 
       const langName = languageNames[targetLanguage.toLowerCase()] || 'English';
 
-      const prompt = `You are a medical translation expert. Simplify the following medical text into easy-to-understand ${langName} language that a patient can comprehend:
+      const prompt = `You are a medical expert. Create a clean, concise summary of this medical report in simple ${langName}:
 
-Medical Text: ${text}
+Medical Text: ${text.substring(0, 2000)}
 
-Requirements:
-1. Use simple, non-technical language in ${langName}
-2. Explain medical terms in everyday words
-3. Maintain medical accuracy while making it accessible
-4. Keep the same meaning but make it patient-friendly
-5. Respond only with the simplified text in ${langName}
+Instructions:
+1. Extract ONLY the key information: patient details, diagnosis, test results, recommendations
+2. Use simple language - explain medical terms
+3. Keep it brief and organized (under 300 words)
+4. Format as short bullet points or brief paragraphs
+5. Focus on what the patient needs to know
 
-Simplified Text:`;
+Simplified Summary:`;
 
       const response = await axios.post(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.geminiApiKey}`,
@@ -1047,19 +1047,12 @@ Context: ${JSON.stringify(context)}`;
       this.validateApiKey('perplexity');
       
       const prompt = `
-        Generate a concise summary of this medical report:
+        Summarize this medical report in 2-3 simple sentences:
         
-        Original Text: ${originalText.substring(0, 1000)}...
-        Simplified Text: ${simplifiedText.substring(0, 1000)}...
-        Key Medical Terms: ${JSON.stringify(medicalTerms)}
+        Text: ${simplifiedText.substring(0, 500)}...
+        Key Terms: ${JSON.stringify(medicalTerms)}
         
-        Provide:
-        1. Overall health status
-        2. Key findings
-        3. Areas of concern
-        4. Next steps
-        
-        Keep it under 200 words and use simple language.
+        Provide: Key findings and any concerns. Keep it under 100 words and very simple.
       `;
 
       const response = await axios.post(
@@ -1069,14 +1062,14 @@ Context: ${JSON.stringify(context)}`;
           messages: [
             {
               role: 'system',
-              content: 'You are a medical AI that creates patient-friendly report summaries.'
+              content: 'You are a medical AI that creates brief, patient-friendly report summaries.'
             },
             {
               role: 'user',
               content: prompt
             }
           ],
-          max_tokens: 300,
+          max_tokens: 150,
           temperature: 0.5
         },
         {
@@ -1096,25 +1089,11 @@ Context: ${JSON.stringify(context)}`;
 
   // Fallback summary generation
   generateFallbackSummary(originalText, simplifiedText, medicalTerms) {
-    const textToAnalyze = (simplifiedText || originalText || '').substring(0, 500);
+    const textToAnalyze = (simplifiedText || originalText || '').substring(0, 300);
     const termsStr = medicalTerms && medicalTerms.length > 0 ? 
-      medicalTerms.map(t => t.text || t).join(', ') : 'None identified';
+      medicalTerms.map(t => t.text || t).slice(0, 5).join(', ') : 'None identified';
     
-    return `**Medical Report Summary**
-
-**Report Analysis:** This report has been processed and simplified for better understanding. 
-
-**Key Medical Terms Found:** ${termsStr}
-
-**Text Sample:** ${textToAnalyze.substring(0, 200)}${textToAnalyze.length > 200 ? '...' : ''}
-
-**Next Steps:**
-• Review the simplified version with your healthcare provider
-• Discuss any questions or concerns about the findings
-• Follow recommended follow-up appointments
-• Keep this report for your medical records
-
-**Important:** This is an automated analysis. Always consult with your healthcare provider for professional medical interpretation and advice.`;
+    return `Your medical report has been processed successfully. Key terms found: ${termsStr}. ${textToAnalyze.substring(0, 150)}... Please consult your healthcare provider for detailed interpretation.`;
   }
 
   // ==========================================

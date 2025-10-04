@@ -175,37 +175,43 @@ class OCRService {
     try {
       // Common medical report patterns
       const patterns = {
-        patientName: /(?:patient|name)[\s:]*([a-zA-Z\s]+)/i,
-        dateOfBirth: /(?:dob|date of birth)[\s:]*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
-        reportDate: /(?:report|test) date[\s:]*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
-        labName: /(?:lab|laboratory)[\s:]*([a-zA-Z\s&]+)/i,
-        doctorName: /(?:doctor|physician)[\s:]*([a-zA-Z\s\.]+)/i,
-        testResults: /([a-zA-Z\s]+)[\s:]*([\d\.]+)[\s]*([a-zA-Z\/\s]*)/g
+        patientName: /(?:Patient\s+Name|Name)[\s:]+([A-Z][a-zA-Z\s\.]+?)(?=\s+Age|Gender|\n|$)/i,
+        age: /(?:Age|Age\/Sex)[\s:]+(\d+)\s*(?:years|yrs)?/i,
+        gender: /(?:Sex|Gender)[\s:]+(\w+)/i,
+        reportDate: /(?:Date\s+of\s+Examination|Report\s+Date|Date)[\s:]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
+        doctorName: /(?:Consulting\s+Physician|Doctor|Physician)[\s:]+([A-Z][a-zA-Z\s\.,]+(?:MD|MBBS)?)/i,
+        diagnosis: /(?:Provisional\s+Diagnosis|Diagnosis|Impression)[\s:]+([^\n]+)/i
       };
 
       const extractedData = {};
       
+      // Extract basic information
       for (const [key, pattern] of Object.entries(patterns)) {
         const match = text.match(pattern);
-        if (match) {
-          extractedData[key] = match[1] || match[0];
+        if (match && match[1]) {
+          extractedData[key] = match[1].trim();
         }
       }
 
-      // Extract test results
-      const testResults = [];
-      let testMatch;
-      const testPattern = /([a-zA-Z\s]+)[\s:]*([\d\.]+)[\s]*([a-zA-Z\/\s]*)/g;
+      // Extract key findings in a clean format
+      const keyFindings = [];
       
-      while ((testMatch = testPattern.exec(text)) !== null) {
-        testResults.push({
-          test: testMatch[1].trim(),
-          value: testMatch[2].trim(),
-          unit: testMatch[3].trim()
-        });
+      // Look for test results with values
+      const testPattern = /(?:^|\n)\s*(?:•\s*)?([A-Z][a-zA-Z\s]+?)[\s:]+(\d+\.?\d*)\s*([a-zA-Z\/\s%]+)/gm;
+      let testMatch;
+      
+      while ((testMatch = testPattern.exec(text)) !== null && keyFindings.length < 10) {
+        const testName = testMatch[1].trim();
+        const value = testMatch[2].trim();
+        const unit = testMatch[3].trim();
+        
+        // Filter out noise and keep only meaningful results
+        if (testName.length > 3 && testName.length < 50 && value && unit.length < 20) {
+          keyFindings.push(`${testName}: ${value} ${unit}`.trim());
+        }
       }
 
-      extractedData.testResults = testResults;
+      extractedData.keyFindings = keyFindings;
 
       return extractedData;
     } catch (error) {

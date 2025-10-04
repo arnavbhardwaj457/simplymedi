@@ -53,9 +53,9 @@ const Header = ({ onMenuClick, user, doctor }) => {
             </button>
 
             <div className="hidden lg:block">
-              <h1 className="text-xl font-semibold text-brown-900 animate-fade-in">
+              <Link to="/app/dashboard" className="text-xl font-semibold text-brown-900 hover:text-brown-700 transition-colors animate-fade-in">
                 SimplyMedi
-              </h1>
+              </Link>
             </div>
           </div>
 

@@ -184,6 +184,124 @@ export const LanguageProvider = ({ children }) => {
     }
   }, [state.currentLanguage]);
 
+  // Translate UI text dynamically
+  const translateUI = useCallback(async (text, context = 'general') => {
+    try {
+      // Skip if already in English
+      if (state.currentLanguage === 'english') {
+        return text;
+      }
+
+      // Check cache first
+      const cacheKey = `${text}_${state.currentLanguage}_${context}`;
+      if (state.translations[cacheKey]) {
+        return state.translations[cacheKey];
+      }
+
+      const response = await fetch('/api/languages/translate-ui', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          targetLanguage: state.currentLanguage,
+          context,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('UI translation failed');
+      }
+      
+      const data = await response.json();
+      
+      // Cache the translation
+      dispatch({ 
+        type: 'SET_TRANSLATIONS', 
+        payload: { [cacheKey]: data.translatedText } 
+      });
+      
+      return data.translatedText;
+    } catch (error) {
+      console.error('UI translation failed:', error);
+      return text; // Return original text on failure
+    }
+  }, [state.currentLanguage, state.translations]);
+
+  // Translate multiple UI texts in batch
+  const translateUIBatch = useCallback(async (texts, context = 'general') => {
+    try {
+      // Skip if already in English
+      if (state.currentLanguage === 'english') {
+        return texts.reduce((acc, text) => {
+          acc[text] = text;
+          return acc;
+        }, {});
+      }
+
+      const response = await fetch('/api/languages/translate-batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          texts,
+          targetLanguage: state.currentLanguage,
+          context,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Batch UI translation failed');
+      }
+      
+      const data = await response.json();
+      
+      // Cache all translations
+      const cacheUpdates = {};
+      Object.entries(data.translations).forEach(([key, value]) => {
+        const cacheKey = `${key}_${state.currentLanguage}_${context}`;
+        cacheUpdates[cacheKey] = value;
+      });
+      
+      dispatch({ 
+        type: 'SET_TRANSLATIONS', 
+        payload: cacheUpdates 
+      });
+      
+      return data.translations;
+    } catch (error) {
+      console.error('Batch UI translation failed:', error);
+      return texts.reduce((acc, text) => {
+        acc[text] = text;
+        return acc;
+      }, {});
+    }
+  }, [state.currentLanguage]);
+
+  // Get formatting rules for current language
+  const getFormattingRules = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/languages/formatting-rules/${state.currentLanguage}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to get formatting rules');
+      }
+      
+      const data = await response.json();
+      return data.formattingRules;
+    } catch (error) {
+      console.error('Failed to get formatting rules:', error);
+      return {
+        direction: 'ltr',
+        numberFormat: 'en-US',
+        dateFormat: 'en-US',
+        currency: 'USD'
+      };
+    }
+  }, [state.currentLanguage]);
+
   // Translation helper with caching
   const t = useCallback((key, params = {}) => {
     try {
@@ -253,6 +371,9 @@ export const LanguageProvider = ({ children }) => {
     detectLanguage,
     simplifyMedicalText,
     loadSupportedLanguages,
+    translateUI,
+    translateUIBatch,
+    getFormattingRules,
     
     // Helpers
     t,

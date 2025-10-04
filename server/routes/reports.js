@@ -279,18 +279,18 @@ Next Steps:
 Note: This is an automated analysis. Always consult with your healthcare provider for professional medical interpretation.`;
     }
 
-    // Create simplified report with safe fallbacks
+    // Create simplified report with safe fallbacks and clean data
     const simplifiedReport = await SimplifiedReport.create({
       reportId: report.id,
       originalText: extractionResult.text || 'No text extracted',
-      simplifiedText: simplifiedResult || extractionResult.text || 'Processing completed',
+      simplifiedText: simplifiedResult || 'Report processed. Please consult your healthcare provider for details.',
       language: 'english',
       medicalTerms: medicalEntities || [],
-      simplifiedTerms: simplifiedResult || extractionResult.text || 'Processing completed',
+      simplifiedTerms: simplifiedResult || 'Report processed successfully.',
       healthRecommendations: healthRecommendations || {},
       riskLevel: (riskAnalysis && riskAnalysis.riskLevel) ? riskAnalysis.riskLevel : 'medium',
       summary: summary || 'Report processed successfully. Consult your healthcare provider for detailed analysis.',
-      keyFindings: (structuredData && structuredData.testResults) ? structuredData.testResults : ['Report analysis completed'],
+      keyFindings: (structuredData && structuredData.keyFindings) ? structuredData.keyFindings : ['Report analysis completed'],
       followUpActions: (healthRecommendations && healthRecommendations.followUpActions) ? healthRecommendations.followUpActions : ['Consult with healthcare provider'],
       aiModel: 'Enhanced Processing with Fallbacks',
       confidence: extractionResult.confidence || 0.8,

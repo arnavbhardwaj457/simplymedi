@@ -353,8 +353,9 @@ router.get('/availability/:doctorId', async (req, res) => {
     }
 
     const requestedDate = new Date(date);
-    const dayOfWeek = requestedDate.toLocaleLowerCase().substring(0, 3);
-    const dayAvailability = doctor.availability[dayOfWeek];
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayOfWeek = dayNames[requestedDate.getDay()];
+    const dayAvailability = doctor.availability ? doctor.availability[dayOfWeek] : null;
 
     if (!dayAvailability || !dayAvailability.available) {
       return res.json({ availableSlots: [] });

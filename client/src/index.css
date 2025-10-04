@@ -17,6 +17,29 @@
     @apply border-brown-200;
   }
 
+  /* RTL Support */
+  [dir="rtl"] {
+    direction: rtl;
+  }
+
+  [dir="rtl"] .rtl\:text-right {
+    text-align: right;
+  }
+
+  [dir="rtl"] .rtl\:text-left {
+    text-align: left;
+  }
+
+  [dir="rtl"] .rtl\:mr-auto {
+    margin-right: auto;
+    margin-left: 0;
+  }
+
+  [dir="rtl"] .rtl\:ml-auto {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
