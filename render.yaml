@@ -3,8 +3,8 @@ services:
     name: simplymedi-backend
     env: node
     plan: free
-    buildCommand: npm install && cd server && npm install
-    startCommand: cd server && npm start
+    buildCommand: cd server && npm install
+    startCommand: node server/index.js
     envVars:
       - key: NODE_ENV
         value: production
